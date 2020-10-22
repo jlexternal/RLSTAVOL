@@ -1,0 +1,88 @@
+% test block/trial generation
+
+
+addpath('..');
+cfg = struct;
+cfg.ntrls   = 150;   
+cfg.mgen    = .6;
+
+fnr_trn     = .20;
+f           = @(sig)fnr_trn-normcdf(.5,cfg.mgen,sig);
+
+cfg.sgen    = fzero(f,abs(rand)*cfg.mgen);  
+cfg.nbout   = 1;    
+cfg.ngen    = 10000;
+cfg.nbgen   = 1000;
+
+blck(1,:) = gen_blck_rlstavol(cfg);
+blck(2,:) = gen_ranked_blck_rlstavol(cfg);
+
+% introduce volatility
+v_m = 20; 
+v_s = 2;
+
+% change point trial index
+v_it = round(normrnd(v_m,v_s,[1 ceil(cfg.ntrls/v_m)]));
+v_it = cumsum(v_it);
+v_it = intersect(1:cfg.ntrls,v_it);
+v_it = [v_it cfg.ntrls+1];
+
+idx_switch = false(size(blck1));
+for i = 1:numel(v_it)
+    if mod(i,2) == 1
+        idx_switch(v_it(i):v_it(i+1)-1) = true;
+    end
+end
+
+blck(1,idx_switch) = 1-blck(1,idx_switch);
+blck(2,idx_switch) = 1-blckidx_switch);
+
+% evidence accumulation model
+l  = @(x,lpr)lpr + log(normpdf(x,cfg.mgen,cfg.sgen))-log(normpdf(x,1-cfg.mgen,cfg.sgen));
+
+% standard Kalman filter
+av_k = nan(size(blcks)); % KF tracked mean of rewards
+sd_k = nan(size(blcks)); % Kf posterior sd 
+
+ls = nan(2,cfg.ntrls);
+lini = [0 0];
+for it = 1:cfg.ntrls
+    % evidence accumulation for the two types of blocks
+    ls(1,it) = l(blck1(it),lini(1));
+    ls(2,it) = l(blck2(it),lini(2));
+    lini(1) = ls(1,it);
+    lini(2) = ls(2,it);
+    
+    % standard KF
+    if it == 1
+        k           = 1e4/(1e4+cfg.sgen);
+        av_k(ib,it) = .5+k*(blcks(ib,it)-.5);
+        sd_k(ib,it) = sqrt(k/(1-k)*cfg.sgen^2);
+    else
+        k           = sd_k(ib,it-1)^2/(sd_k(ib,it-1)^2+cfg.sgen^2);
+        av_k(ib,it) = av_k(ib,it-1)+k*(blcks(ib,it)-av_k(ib,it-1));
+        sd_k(ib,it) = sqrt((1-k)*sd_k(ib,it-1)^2 + cfg.sgen^2);
+    end
+    
+    
+    
+end
+
+subplot(2,1,1);
+plot(ls');
+hold on;
+yline(0);
+for i = 1:numel(v_it)-1
+    xline(v_it(i));
+    hold on
+end
+subplot(2,1,2);
+plot(1:cfg.ntrls,blck1);
+hold on;
+plot(1:cfg.ntrls,blck2);
+yline(.5,':');
+for i = 1:numel(v_it)-1
+    xline(v_it(i));
+    hold on
+end
+ylim([0 1]);

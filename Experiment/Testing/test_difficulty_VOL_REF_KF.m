@@ -22,9 +22,6 @@ rngseed = 'shuffle';
 rng = RandStream('mt19937ar','Seed',rngseed);
 RandStream.setGlobalStream(rng);
 
-% set task generation random number stream
-rng_tsk = RandStream('mt19937ar','Seed',rngseed);
-
 % FIRST STEP OF TASK GENERATION
 fprintf('generating episodes\n');
 

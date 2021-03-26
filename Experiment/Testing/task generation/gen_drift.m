@@ -1,68 +1,24 @@
-% script TEST_GEN_SESSION
+function out = gen_drift(cfg)
+% Creates the mean drift values for the VOL condition as well as the REF and UNP mean
+%   values.
 
-cfg = struct;
+% Requires betafun.m, betapar.m, betasmp.m
 
+% load configuration into local
+ngen        = cfg.ngen;         % number of episodes to be generated
+nepis       = cfg.nepis;        % number of episodes desired
+epimin      = cfg.epimin;       % minimum episode length
+epimax      = cfg.epimax;       % maximum episode length
+avgmin      = cfg.avgmin;       % minimum average value allowed
+avgmax      = cfg.avgmax;       % maximum average value allowed
+var_drift   = cfg.var_drift;    % drifting variance
 
-% required input arguments (temporarily hard coded)
-cfg.var_drift   = 0.05^2;
-cfg.avgmin      = 
-cfg.avgmax      = 
-cfg.fnr         = .2;   % desired false negative rate for REF 
-
-
-var_drift   = cfg.var_drift; % drift variance / process noise
-
-fnr         = cfg.fnr;
-
-f           = @(sig)fnr-normcdf(.5,mean,sig);
-var_smpl    = fzero(f,abs(rand)*mean); % sampling variance / measurement uncertainty
-
-
-
-
-% 1/ Generate episodes for VOL
-
-% a. generate mean drifts for VOL condition
-% b. calculate mean values for episodes and use them as means for REF condition
-% c. calculate the sampling variance based on the desired false negative rate around the
-%       mean values in REF
-% d. generate trajectories for REF and VOL
-% e. calculate effective measurement uncertainty (vs) for REF
-% f. calculate 
-
-
-
-
-
-
-
-%% old code
-
-% episode generation parameters
-ngen        = 2e3;  % number of episodes to be generated
-nepis       = 1e3;  % number of episodes desired
-epimin      = 8;    % minimum episode length
-epimax      = 24;   % maximum episode length
-avgmin      = 0.55;
-avgmax      = 0.75;
-
-
-rngseed = 'shuffle';
-
-% set global random number stream
-rng = RandStream('mt19937ar','Seed',rngseed);
-RandStream.setGlobalStream(rng);
-
-% set task generation random number stream
-rng_tsk = RandStream('mt19937ar','Seed',rngseed);
-
-% FIRST STEP OF TASK GENERATION
 fprintf('generating episodes\n');
 
 get_pr = @(m,v)betasmp(m,v); % sample from beta distr. w/ mean m and variance v
 
-pr_all = cell(ngen,1);
-pr = zeros(1,epimax+2);
+pr_all      = cell(ngen,1);
+pr          = zeros(1,epimax+2);
 
 while true 
     % Generate mean-drift episodes
@@ -126,9 +82,9 @@ end
 
 epis        = pr_all_vec;
 epis_vol    = epis;
-epis_ref    = nan(1,nepis);
-
 epis_avg    = nan(1,nepis); % average value of episode 
+sw_trs      = false(1,sum(nepilen));
+
 % invert values at switch points
 for i = 1:nepis
     epis_avg(i) = mean(epis_vol(epistart(i):(epistart(i)+nepilen(i)-1)));
@@ -137,6 +93,8 @@ for i = 1:nepis
     if mod(i,2) == 0
         epis_vol(epistart(i):(epistart(i)+nepilen(i)-1)) = 1-epis_vol(epistart(i):(epistart(i)+nepilen(i)-1));
         epis_avg(i) = 1-epis_avg(i);
+        
+        sw_trs(epistart(i):(epistart(i)+nepilen(i)-1)) = 1;
     end
     
     % create mean "drift" for the REF condition
@@ -147,6 +105,15 @@ end
 var_drift_ef = var(epis_vol(2:end)-epis_vol(1:end-1));
 fprintf('True drift variance: %.4f\nEffective drift variance: %.4f\n',var_drift,var_drift_ef);
 
-% Create latent trajectory for VOL condition
-traj_vol = get_pr(epis_vol,var_smpl);
-traj_ref = get_pr(epis_ref,var_smpl);
+out             = struct;
+out.epis_vol    = epis_vol;     % mean drift value for the VOL condition
+out.epis_avg    = epis_avg;     % static values for REF and UNP conditions
+out.epis_ref    = epis_ref;     % mean static values for the REF & UNP conditions
+out.vd_eff      = var_drift_ef; % effective drift variance for the VOL drift values
+out.epistart    = epistart;     % indices of switch/start points of the drifts
+out.nepilen     = nepilen;      % lengths of episodes contained within entire drift
+out.sw_trs      = sw_trs;       % switch point indices 
+
+out.cfg_in      = cfg;
+
+end

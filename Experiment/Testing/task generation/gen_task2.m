@@ -29,8 +29,9 @@ idx_lo              = epis_avg_up < .5;
 epis_avg_up(idx_lo) = 1-epis_avg_up(idx_lo);% make them all on the same side
 epis_avg_ref        = mean(epis_avg_up);    % take the average for spread calculation based on FNR
 
-f_min               = @(sig)abs(fnr-normcdf(.5,epis_avg_ref,sig));
-vs                  = (fminbnd(f_min,1e-5,1))^2; % sampling variance for REF
+f_min = @(sig)abs(fnr-normcdf(.5,epis_avg_ref,sig));
+vs    = (fminbnd(f_min,1e-5,1))^2; % sampling variance for REF
+vd    = cfg.var_drift;
 
 % d. generate trajectories for REF and VOL
 nt_all      = numel(epis_struct.epis_vol); % number of trials in entire episode generation
@@ -153,7 +154,7 @@ traj_pos_unp = get_pr(epis_pos_unp,vs);
 fnr_unp = betacdf(.5,a,b);
 clearvars epis_pos_unp traj_pos_unp a b
 
-%%
+%
 % g. choose 80 trials in total (5 episodes of lengths 8:4:24)
 nepilen     = epis_struct.nepilen; 
 nlens       = 8:4:24; 
@@ -241,30 +242,78 @@ for icond = [1 3]
         if loop_ctr > 10000
             disp('Loops is in it''s 10000th iteration... may be stuck...')
         end
+        if loop_ctr > 1e6
+            error('Loop stuck in infinite cycle!');
+        end
     end
 end
 traj(2,:) = get_pr(epis(2,:),vs); % get VOL condition trajectory
 
+idx_epi = nan(1,nt_final);
+for iepi = 1:nepis
+    idx_epi(epiorder(iepi):epiend(iepi)) = iepi;
+end
+
+%% Run KF on blocks
+
+sim_out = cell(1,3);
+for i = 1:3
+    cfg          = struct;
+    cfg.epis     = epis(i,:);
+    cfg.traj     = traj(i,:);
+    cfg.vs       = vs;
+    cfg.epistart = epiorder;    
+    if i == 2
+        cfg.isvol = true;
+        cfg.vd    = vd;
+    else
+        cfg.isvol = false;
+        cfg.vd    = 0;
+    end
+    sim_out{i} = sim_KF(cfg);
+end
+
 % visualize task to determine feasibility for humans (and not KF)
+nt = nt_final;
 if true
     condstr = {'REF','VOL','UNP'};
     figure(1)
     clf
     for i = 1:3
-        subplot(1,3,i);
+        subplot(3,3,i);
         hold on
         xlim([0 nt_final]);
         ylim([0 1]);
-        plot(traj(i,:))
         scatter(1:nt_final,traj(i,:));
         plot(epis(i,:),'LineWidth',2);
+        % KF results
+        shadedErrorBar(1:nt,sim_out{i}.mt(1:nt),sqrt(sim_out{i}.vt(1:nt)),'lineprops',{'b','LineWidth',2},'patchSaturation',.1);
         for iepi = 1:5
             xline(epiorder(iepi));
         end
         yline(.5,'--','LineWidth',2);
         title(condstr(i));
+        % square root of the posterior variance
+        subplot(3,3,3+i)
+        hold on
+        ylim([0 .13]);
+        plot(1:nt,sqrt(sim_out{i}.vt));
+        % kalman gain
+        subplot(3,3,6+i)
+        hold on
+        ylim([0 1]);
+        plot(1:nt,sim_out{i}.kt);
     end
 end
+
+ind_even = mod(idx_epi,2)==0;
+traj_out = traj;
+traj_out(:,ind_even==1) = 1-traj_out(:,ind_even==1);
+% export data for online experiment
+%   traj_out:   the reward value for the CORRECT OPTION
+%   idx_epi:    block label for each trial (to identify new/switch trials)
+csvwrite('traj.csv',traj_out);
+csvwrite('idx_epi.csv',idx_epi);
 
 %% visualize reward distribution
 figure(2)

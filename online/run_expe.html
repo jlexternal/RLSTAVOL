@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src ="jspsych-6.3.0/jspsych.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-image-keyboard-response.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-preload.js"></script>
+    <script src ="jquery/jquery-3.6.0.js"></script>  <!-- to use AJAX -->
+    <link href  ="jspsych-6.3.0/css/jspsych.css" rel="stylesheet" type="text/css">
+  </head>
+  <body></body>
+  <script>
+
+    /* For testing on a local machine
+        You need to host a local server for the ajax stuff to work properly.
+        Go to the project working directory, open terminal, type 'python -m http.server'
+        without the single quotes, then open http://localhost:8000/run_expe.html in browser
+    */
+
+    var debugFlag = false; // change to true if debugging data is desired
+
+    /* Process pre-made experiment data */
+    $(document).ready(function() {
+      $.ajax({ // import block indices into javascript
+          type:     "GET",
+          url:      "idx_epi.csv",
+          dataType: "text",
+          error:    function() { // in case of failure
+            console.log('block index csv file GET failed');
+          },
+          success:  function(data) {
+            console.log('block index csv file GET succeeded');
+            get_idx_blocks(data);
+          }
+       });
+      $.ajax({ // import experiment data into javascript and run tasks
+          type:     "GET",
+          url:      "traj.csv",
+          dataType: "text",
+          error:    function() { // in case of failure
+            console.log('feedback csv file GET failed');
+          },
+          success:  function(data) {
+            console.log('feedback csv file GET succeeded');
+            exec_expe(data);
+          }
+       });
+    });
+
+    var timeline = [];
+
+    var idx_blocks = [];
+    function get_idx_blocks(idx_blocks_csv){
+      var block_indices = idx_blocks_csv.split(',').map(Number);
+      idx_blocks = block_indices;
+    }
+
+    function exec_expe(reward_csv) {
+      // 2 shapes for VOL; 10 shapes for REF; 10 shapes for UNP
+      var shapes = [];
+      for (var i = 1; i<13; i++) {
+        let imgStr = 'img/shape' + (i.toString()).padStart(2,'0') + '.png';
+        shapes.push(imgStr);
+      };
+
+      /* Preload .PNG files to be used as stimuli */
+      var preload = {
+        type: 'preload',
+        images: function() {
+          let images = ['img/blue.png', 'img/orange.png'];
+          images = images.concat(shapes);
+          return images;
+        }
+      };
+      timeline.push(preload);
+
+      var welcome_block = {
+    		type: 'html-keyboard-response',
+    		stimulus: '<p style = "text-align: center; font-size: 28px"><br>Hello and welcome to the experiment!</p>' +
+    		'<p style = "text-align: center; font-size: 28px">Press spacebar to continue.</p>',
+        choices: [' '],
+        stimulus_duration: 4000
+  		};
+      timeline.push(welcome_block);
+
+      // instructions go here
+
+      var n_sessions = 3;
+      /* Process reward value array for correct option into JS */
+      var rewards_arr = reward_csv.split(/\r\n|\n/); // takes text and splits it at carriage return points
+      if (rewards_arr.length > n_sessions){
+        while (rewards_arr.length != n_sessions) {
+          rewards_arr.pop(); // remove empty row
+        };
+      };
+      // convert unseparated text arrays to separated numerical arrays
+      var rew_corr = [];
+
+      for (var i=0; i<n_sessions; i++){
+        let lines = rewards_arr[i].split(',').map(Number); // round the entries before bringing into js
+        rew_corr.push(lines);
+      };
+
+      var choice_opts = ['f','j']; // set of available keys to choices
+
+      /* Session loop */
+      for (var isesh=0; isesh<n_sessions; isesh++) {
+        var n_trials  = rew_corr[isesh].length; // number of trials
+        var fb_vals   = rew_corr[isesh];        // feedback values for the correct option
+        fb_vals       = fb_vals.map(x => Math.round(x*100));
+
+        /* Generate random placement of the correct choice */
+        var cor_locs  = Array.from({length: n_trials}, () => Math.round(Math.random()));
+
+        /* Localize stimuli for the current session */
+        if (isesh == 1) { // for VOL session
+          var stimulis2 = ['img/blue.png','img/orange.png'];
+        }
+        else { // for REF and UNP
+          var stimulis2 = shapes;
+        };
+
+        /* Trial loop */
+        let iblk_prev;
+        for (var itrl=0; itrl<n_trials; itrl++){
+          let iblk_curr   = idx_blocks[itrl]; // block index on current trial; starts from 1 (imported from MATLAB)
+
+          /* Localize indexed variables */
+          let stim_loc   = cor_locs[itrl];
+          let cor_choice; // either 'f' or 'j'
+          if (iblk_curr % 2 == 0) {
+            cor_choice = choice_opts[-stim_loc+1]; // invert correct choice
+          }
+          else {
+            cor_choice = choice_opts[stim_loc]; // location from cor_locs
+          }
+          /* Local declaration of the current shape set */
+          let stims;
+          if (isesh != 1) { // for REF and UNP, need to cycle through shapes
+            stims = [stimulis2[stim_loc+2*(idx_blocks[itrl]-1)], stimulis2[-stim_loc+1+2*(idx_blocks[itrl]-1)]];
+          }
+          else { // for VOL, maintain the same shape set for entire session
+            stims = [stimulis2[stim_loc], stimulis2[-stim_loc+1]];
+          }
+
+          // Choice options stimulus
+          var trialstim = {
+            type: "html-keyboard-response",
+            stimulus: function(){
+              return '<img src="' + stims[0]  + '" /><img src="' + stims[1]  + '" />';
+            },
+            choices: ['f','j'], // response set
+            data: {
+              task: 'response',
+              correct_response: jsPsych.timelineVariable('correct_response')
+            },
+            on_finish: function(data){
+              // correct/incorrect flag for trial
+              if(jsPsych.pluginAPI.compareKeys(data.response, cor_choice)){
+                data.correct = true;
+              } else {
+                data.correct = false;
+              }
+            }
+          };
+
+          // Stimulus that indicates a switch trial
+          if (itrl > 0) {
+            if (iblk_curr != iblk_prev) {
+              if (debugFlag) {
+                var debug_switch_trial = {
+                  type: 'html-keyboard-response',
+                  stimulus: 'switch trial',
+                  choices: jsPsych.NO_KEYS,
+                  trial_duration: 1000
+                };
+                timeline.push(debug_switch_trial);
+              }
+              else {
+                var debug_switch_trial = {
+                  type: 'html-keyboard-response',
+                  stimulus: '<p style = "text-align: center; font-size: 28px">'+
+                            'New set of shapes!<br><br>Press spacebar to continue.</p>',
+                  choices: [' ']
+                };
+                timeline.push(debug_switch_trial);
+              }
+
+            }
+          }
+
+          iblk_prev = idx_blocks[itrl]; // block index on the previous trial; there should be no calls of iblk_prev after this assignment
+
+          let val = fb_vals[itrl];
+          // Feedback stimulus
+          var feedback = {
+            type: 'html-keyboard-response',
+            stimulus: function(){
+              let last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+              let fb_str;
+              if (last_trial_correct) {
+                fb_str = val;
+              } else {
+                fb_str = 100-val;
+              }
+              return '<div style="font-size:60px;">'+fb_str+'</div>';
+            },
+            choices: jsPsych.NO_KEYS,
+            trial_duration: 1000
+          };
+
+          var fixation = {
+            type: 'html-keyboard-response',
+            stimulus: '<div style="font-size:60px;">+</div>',
+            choices: jsPsych.NO_KEYS,
+            trial_duration: function(){
+              if (debugFlag){
+                return 250;
+              }
+              else {
+                return 100;
+                //return jsPsych.randomization.sampleWithoutReplacement([250, 500, 750, 1000, 1250, 1500, 1750, 2000], 1)[0];
+              }
+            }
+          }
+
+          var debug_data = { // trial number
+            type: 'html-keyboard-response',
+            stimulus: itrl+1,
+            choices: jsPsych.NO_KEYS,
+            trial_duration: 500
+          }
+
+          var debug_data2 = { // feedback for correct/incorrect
+            type: 'html-keyboard-response',
+            stimulus: function(){
+              let last_trial_correct = jsPsych.data.get().last(2).values()[0].correct;
+              if (last_trial_correct) {
+                return "correct";
+              } else {
+                return "wrong";
+              }
+            },
+            choices: jsPsych.NO_KEYS,
+            trial_duration: 500
+          };
+          
+          if (itrl == 0) {
+            timeline.push(fixation);
+          }
+
+          if (debugFlag) {
+            timeline.push(debug_data, trialstim, feedback, debug_data2);
+          }
+          else {
+            timeline.push(trialstim, feedback, fixation);
+          }
+        } // end trial loop
+      } // end block loop
+
+      /* Start the experiment */
+      jsPsych.init({
+        timeline: timeline,
+        minimum_valid_rt: 100,
+        on_finish: function() {
+          jsPsych.data.displayData();
+        }
+      });
+    } // end function exec_expe
+
+  </script>
+</html>

@@ -12,6 +12,7 @@
     <link href  ="jspsych-6.3.0/css/jspsych.css" rel="stylesheet" type="text/css">
     <!-- Import experiment functions -->
     <script src="exec_expe.js"></script>
+    <script src="exec_training.js"></script>
   </head>
   <body></body>
   <script>
@@ -27,13 +28,14 @@
         idx_epi.csv: file containing the trial indices of switch blocks
     */
 
-    var debugFlag = false; // change to true if debugging data is desired
+    var debugFlag = true; // change to true if debugging data is desired
 
     var timeline = []; // initialize jsPsych timeline variable
     var idx_blocks = [];
 
-
     // need to work on making the practice sessions and giving feedback based on performance
+    // the training blocks should be written in a separate function and called upon before
+    // exec_expe in the success property of the last AJAX call
 
     /* Process pre-made experiment data */
     $(document).ready(function() {
@@ -59,6 +61,7 @@
           },
           success:  function(data) { // experiment gets called upon here
             console.log('feedback csv file GET succeeded');
+            //exec_training('REF');
             exec_expe(data);
           }
        });

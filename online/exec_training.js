@@ -43,29 +43,33 @@ function exec_training(training_type) {
   ];
 
   /* Load feedback for the respective training session */
-  var feedback_session;
+  var fb_session;
   switch(training_type) {
     case 'REF':
-      feedback_session = feedback_all[0];
+      fb_session = feedback_all[0];
       break;
     case 'VOL':
-      feedback_session = feedback_all[1];
+      fb_session = feedback_all[1];
       break;
     case 'UNP':
-      feedback_session = feedback_all[2];
+      fb_session = feedback_all[2];
       break;
   }
 
   var choice_opts = ['f','j'];                // set of available keys to choices
-  var n_blocks    = feedback_session.length;  // number of blocks in specified training sesion
+  var n_blocks    = fb_session.length;  // number of blocks in specified training sesion
 
   // block loop
   for (iblk=0; iblk<n_blocks; iblk++) {
-    let fb_vals   = feedback_session[iblk]; // array of feedback for the given block
+    let fb_vals   = fb_session[iblk]; // array of feedback for the given block
     let n_trials  = fb_vals.length;        // number of trials for given block
 
-    /* Generate random placement of the correct choice */
+    /* Generate random placement of the correct choice
+        The correct choice however, is always the shape_train01 */
     var cor_locs  = Array.from({length: n_trials}, () => Math.round(Math.random()));
+
+    let score = 0;
+    let score_arr = [];
 
     // trial loop
     for (itrl=0; itrl<n_trials; itrl++) {
@@ -92,8 +96,11 @@ function exec_training(training_type) {
           // correct/incorrect flag for trial
           if(jsPsych.pluginAPI.compareKeys(data.response, cor_choice)){
             data.correct = true;
+            score++;
+            score_arr.push(1);
           } else {
             data.correct = false;
+            score_arr.push(0);
           }
         }
       };
@@ -167,22 +174,107 @@ function exec_training(training_type) {
         }
       };
 
-      // initial fixation stimulus push
+      // initial fixation cross push
       if (itrl == 0) {
         timeline.push(fixation);
       }
 
-      /* push events to timeline */
+      // push events to timeline
       timeline.push(trialstim,chosen_trialstim,feedback,fixation);
 
+      // end of last trial
       if (itrl == n_trials-1){
         var trialstim_end_block = {
           type: 'html-keyboard-response',
-          stimulus: 'end of training block',
+          stimulus: function() {
+            return 'end of training block: ' + score + '/' + n_trials;
+          },
           choices: jsPsych.NO_KEYS,
           trial_duration: 1000
         };
         timeline.push(trialstim_end_block);
+
+        var trialstim_end_block2 = {
+          type: 'html-keyboard-response',
+          stimulus: function() {
+            var fb_seen = [];
+            for (var i=0; i<fb_session[iblk-1].length; i++) {
+              if (score_arr[i] == 1) {
+                fb_seen.push(fb_session[iblk-1][i]);
+              } else {
+                fb_seen.push(100-fb_session[iblk-1][i]);
+              }
+            }
+            // create table with detailed feedback history
+            function tableCreate(){
+              // from https://stackoverflow.com/questions/14643617/create-table-using-javascript
+              var score_arr_modified = score_arr;
+              score_arr_modified.unshift(0);
+
+              var tbl  = document.createElement('table');
+              tbl.style.width  = '200px';
+              tbl.style.border = '0px';
+
+              for (var i=0; i<5; i++) { // go through rows
+                var tr = tbl.insertRow();
+                for (var j=0; j<n_trials+1; j++) { // go through columns
+                  var td = tr.insertCell();
+                  if (i % 2 == 0) {
+                    let cellContent;
+                    let span = document.createElement('span');
+                    if (i==0 & j==0) {        // label 'A'
+                      span.style.fontSize = "40px";
+                      span.style.float = "left";
+                      cellContent = 'A';
+                    } else if (i==2 & j==0) { // label 'Score:'
+                      span.style.float = "right";
+                      cellContent = 'Score:';
+                    } else if (i==4 & j==0) { // label 'B'
+                      span.style.fontSize = "40px";
+                      span.style.float = "left";
+                      cellContent = 'B';
+                    } else if (i==2) {        // feedback seen
+                      console.log(j);
+                      cellContent = ' '+fb_seen[j-1]+' ';
+                    } else if (i==0) {        // when A was chosen
+                      if (score_arr_modified[j] == 1) {
+                      cellContent = '  O  ';
+                      } else {
+                        cellContent = ' ';
+                      }
+                    } else if (i==4) {        // when B was chosen
+                      if (score_arr_modified[j] == 0) {
+                      cellContent = '  X  ';
+                      } else {
+                        cellContent = ' ';
+                      }
+                    }
+                    else {
+                      cellContent = ' ';
+                    }
+                    cellNode = document.createTextNode(cellContent);
+                    span.appendChild(cellNode);
+
+                    td.appendChild(span);
+                  }
+                  else {
+                    td.appendChild(document.createTextNode(' '));
+                  }
+                }
+              }
+              return tbl;
+            } // end function TableCreate
+
+            let tbl       = tableCreate();
+            let divTable  = document.createElement("div"); //create new <div>
+            divTable.appendChild(tbl);
+
+            return divTable.innerHTML;
+          },
+          choices: jsPsych.NO_KEYS,
+          trial_duration: 1000
+        };
+        timeline.push(trialstim_end_block2);
       }
 
     } // end trial loop

@@ -145,20 +145,23 @@ function exec_expe(reward_csv) {
   var instr_gen3 = "In this experiment, you will play 3 simple games where you are trying to <br>" +
     "identify the source of gold. <br><br>In each game, you will be presented with two sources, <br>" +
     "and your goal is to figure out which source has true gold.<br><br>The other source, "+
-    "will give you fake gold.<br><br>";
+    "will give you fake gold.<br><br>"+
+    '<p style = "font-size: 24px; font-weight: bold">Press \'F\' to go back.<br><br>Press \'J\' to continue.</p>';
   var instr_gen4 = 'Each time you choose a source, you will receive points ranging from 0 to 100.<br><br>' +
     'Both the real gold and the fake gold will give you points,<br>' +
     'but the real gold tends to give higher points more often.<br><br>' +
     'Higher, meaning greater than 50.<br><br>' +
     'Note, however, that real gold may give you low points as well, and that fake gold<br>' +
-    'also provides you with high points.';
+    'also provides you with high points.'+
+    '<p style = "font-size: 24px; font-weight: bold">Press \'F\' to go back.<br><br>Press \'J\' to continue.</p>';
   var instructions_gen = {
     type: 'instructions',
     pages: [instr_gen1, instr_gen2, instr_gen3, instr_gen4],
     key_backward: 'f',
     key_forward: 'j'
   };
-  timeline.push(instructions_gen); // explains what keys the subject will be using
+
+  // debug timeline.push(instructions_gen); // explains what keys the subject will be using
 
   // segue into training
   var instructions_keypress = {

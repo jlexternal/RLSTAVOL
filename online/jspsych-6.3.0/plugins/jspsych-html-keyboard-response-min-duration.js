@@ -1,5 +1,5 @@
 /**
- * jspsych-html-keyboard-response
+ * jspsych-html-keyboard-response-min-duration
  * Josh de Leeuw
  *
  * plugin for displaying a stimulus and getting a keyboard response
@@ -9,12 +9,12 @@
  **/
 
 
-jsPsych.plugins["html-keyboard-response"] = (function() {
+jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
 
   var plugin = {};
 
   plugin.info = {
-    name: 'html-keyboard-response',
+    name: 'html-keyboard-response-min-duration',
     description: '',
     parameters: {
       stimulus: {
@@ -48,6 +48,12 @@ jsPsych.plugins["html-keyboard-response"] = (function() {
         default: null,
         description: 'How long to show trial before it ends.'
       },
+      minimum_duration: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Minimum duration',
+        default: 1000,
+        description: 'Minimum duration before any keyboard input is taken.'
+      },
       response_ends_trial: {
         type: jsPsych.plugins.parameterType.BOOL,
         pretty_name: 'Response ends trial',
@@ -55,12 +61,15 @@ jsPsych.plugins["html-keyboard-response"] = (function() {
         description: 'If true, trial will end when subject makes a response.'
       },
 
+
     }
   }
 
   plugin.trial = function(display_element, trial) {
 
-    var new_html = '<div id="jspsych-html-keyboard-response-stimulus">'+trial.stimulus+'</div>';
+    trial.trial_duration = trial.minimum_duration;
+
+    var new_html = '<div id="jspsych-html-keyboard-response-min-duration-stimulus">'+trial.stimulus+'</div>';
 
     // add prompt
     if(trial.prompt !== null){
@@ -106,7 +115,7 @@ jsPsych.plugins["html-keyboard-response"] = (function() {
 
       // after a valid response, the stimulus will have the CSS class 'responded'
       // which can be used to provide visual feedback that a response was recorded
-      display_element.querySelector('#jspsych-html-keyboard-response-stimulus').className += ' responded';
+      //display_element.querySelector('#jspsych-html-keyboard-response-stimulus-min-duration').className += ' responded';
 
       // only record the first response
       if (response.key == null) {
@@ -119,20 +128,22 @@ jsPsych.plugins["html-keyboard-response"] = (function() {
     };
 
     // start the response listener
-    if (trial.choices != jsPsych.NO_KEYS) {   
-      var keyboardListener = jsPsych.pluginAPI.getKeyboardResponse({
-        callback_function: after_response,
-        valid_responses: trial.choices,
-        rt_method: 'performance',
-        persist: false,
-        allow_held_key: false
-      });
-    }
+    jsPsych.pluginAPI.setTimeout(function() {
+      if (trial.choices != jsPsych.NO_KEYS) {
+        var keyboardListener = jsPsych.pluginAPI.getKeyboardResponse({
+          callback_function: after_response,
+          valid_responses: trial.choices,
+          rt_method: 'performance',
+          persist: false,
+          allow_held_key: false
+        });
+      }
+    }, trial.minimum_duration);
 
     // hide stimulus if stimulus_duration is set
     if (trial.stimulus_duration !== null) {
       jsPsych.pluginAPI.setTimeout(function() {
-        display_element.querySelector('#jspsych-html-keyboard-response-stimulus').style.visibility = 'hidden';
+        display_element.querySelector('#jspsych-html-keyboard-response-stimulus-min-duration').style.visibility = 'hidden';
       }, trial.stimulus_duration);
     }
 

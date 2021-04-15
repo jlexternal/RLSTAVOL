@@ -4,6 +4,7 @@
     <title>My experiment</title>
     <script src ="jspsych-6.3.0/jspsych.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response-min-duration.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-image-keyboard-response.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-instructions.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-preload.js"></script>
@@ -13,6 +14,8 @@
     <!-- Import experiment functions -->
     <script src="exec_expe.js"></script>
     <script src="exec_training.js"></script>
+    <script src="spit_long_instructions.js"></script>
+    <script src="debriefTableCreate.js"></script>
   </head>
   <body></body>
   <script>
@@ -29,6 +32,8 @@
     */
 
     var debugFlag = true; // change to true if debugging data is desired
+
+    var subj_num = 1; // to be brought in from the online testing platform
 
     var timeline = []; // initialize jsPsych timeline variable
     var idx_blocks = [];

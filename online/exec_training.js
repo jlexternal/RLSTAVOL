@@ -1,6 +1,6 @@
-function exec_training(training_type) {
+function exec_training(cond_type) {
 
-  // the argument 'training_type' determines which training session to run
+  // the argument 'cond_type' determines which training session to run
 
   /*
     Introduce how the experiment works and what the goal of the task is.
@@ -16,7 +16,7 @@ function exec_training(training_type) {
   */
 
   /* load and preload images to be used as training stimuli */
-  var shapes = ['img/shape_train01.png','img/shape_train02.png','img/shape_blank.png'];
+  var shapes = ['img/shape_train01.png','img/shape_train02.png','img/shape_blank.png','img/shape_spacer.png'];
   var preload = {
     type: 'preload',
     images: shapes
@@ -37,14 +37,21 @@ function exec_training(training_type) {
 
   // hard code reward values for the different types of training blocks
   var feedback_all = [
-    [[62, 59, 56, 48, 59, 73, 45, 54, 70, 67],[43, 39, 52, 58, 54]],
-    [1,1,1,1,1],
-    ['blah']
+    /* REF */
+    [[62, 59, 56, 48, 59, 73, 45, 54, 70, 67]],
+    /* VOL */
+    /* Note 1: The switch point is hard coded into the function debriefTableCreate.
+              It will not be difficult to make this more dynamic with an argument. */
+    /* Note 2: The values following the switch point are the feedback values for the WRONG choice */
+    [[66, 41, 69, 50, 56, 55, 75, 78, /*switch point*/ 52, 33, 45, 50, 49, 23, 73, 46, 44, 37, 36, 26]],
+    /* UNP */
+     // values which fluctuate more wildly and hit closer to the extremes
+    [[1,2,3]]
   ];
 
   /* Load feedback for the respective training session */
   var fb_session;
-  switch(training_type) {
+  switch(cond_type) {
     case 'REF':
       fb_session = feedback_all[0];
       break;
@@ -56,13 +63,14 @@ function exec_training(training_type) {
       break;
   }
 
-  var choice_opts = ['f','j'];                // set of available keys to choices
-  var n_blocks    = fb_session.length;  // number of blocks in specified training sesion
+  var choice_opts = ['f','j'];          // set of available keys to choices
+  var n_blocks    = fb_session.length;  // number of blocks in specified training session
 
   // block loop
   for (iblk=0; iblk<n_blocks; iblk++) {
     let fb_vals   = fb_session[iblk]; // array of feedback for the given block
-    let n_trials  = fb_vals.length;        // number of trials for given block
+    let n_trials  = fb_vals.length;   // number of trials for given block
+    let curr_iblk = iblk;
 
     /* Generate random placement of the correct choice
         The correct choice however, is always the shape_train01 */
@@ -73,23 +81,21 @@ function exec_training(training_type) {
 
     // trial loop
     for (itrl=0; itrl<n_trials; itrl++) {
-
-      /* Localize indexed variables */
+      // localize indexed variables
       let stim_loc    = cor_locs[itrl];
       let cor_choice  = choice_opts[stim_loc];
       let stims       = [stimulis[stim_loc], stimulis[-stim_loc+1]];
-
       // main stimuli for each trial
       var trialstim = {
         type: "html-keyboard-response",
         stimulus: function(){
-          return '<img src="' + stims[0]  + '"/><img src="' + stims[1]  + '" />';
+          return '<img src="' + stims[0]  + '"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
         },
         choices: ['f','j'], // response set
         data: {
           task: 'response',
           correct_response: jsPsych.timelineVariable('correct_response'),
-          condition: training_type + '_training',
+          condition: cond_type + '_training',
           trial_expe: itrl
         },
         on_finish: function(data){
@@ -110,10 +116,10 @@ function exec_training(training_type) {
         type: "html-keyboard-response",
         stimulus: function(){
           if (jsPsych.data.get().last(1).values()[0].response == 'f') {
-            return '<img src="' + stims[0]  + '"/><img src="img/shape_blank.png" />';
+            return '<img src="' + stims[0]  + '"/><img src="img/shape_spacer.png" /><img src="img/shape_blank.png" />';
           }
           else {
-            return '<img src="img/shape_blank.png"/><img src="' + stims[1]  + '" />';
+            return '<img src="img/shape_blank.png"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
           }
         },
         trial_duration: function() {
@@ -127,13 +133,13 @@ function exec_training(training_type) {
         choices: jsPsych.NO_KEYS
       };
 
+      // feedback stimulus
       let val = fb_vals[itrl];
-      // Feedback stimulus
       var feedback = {
         type: 'html-keyboard-response',
         stimulus: function(){
           /* *************************************************************************
-          Warning: the argument of 'last()'' must be the number of trials
+          Warning: the argument of 'last()' must be the number of trials
             'feedback' is away from 'trialstim' in the timeline push below.
             e.g. 'timeline.push(trialstim, feedback)' ->  'last(1)'                     */
 
@@ -169,7 +175,7 @@ function exec_training(training_type) {
           }
           else {
             return 500; // remove this and uncomment line below in final
-            //return jsPsych.randomization.sampleWithoutReplacement([250, 500, 750, 1000, 1250], 1)[0];
+            //return jsPsych.randomization.sampleWithoutReplacement([250, 500, 750], 1)[0];
           }
         }
       };
@@ -198,81 +204,75 @@ function exec_training(training_type) {
           type: 'html-keyboard-response',
           stimulus: function() {
             var fb_seen = [];
-            for (var i=0; i<fb_session[iblk-1].length; i++) {
+            for (var i=0; i<fb_session[curr_iblk].length; i++) {
               if (score_arr[i] == 1) {
-                fb_seen.push(fb_session[iblk-1][i]);
+                fb_seen.push(fb_session[curr_iblk][i]);
               } else {
-                fb_seen.push(100-fb_session[iblk-1][i]);
+                fb_seen.push(100-fb_session[curr_iblk][i]);
               }
             }
-            // create table with detailed feedback history
-            function tableCreate(){
-              // from https://stackoverflow.com/questions/14643617/create-table-using-javascript
-              var score_arr_modified = score_arr;
-              score_arr_modified.unshift(0);
+            // preface to the feedback table
+            let aboveTableNodeSpan = document.createElement("span");
+                aboveTableNodeSpan.appendChild(document.createTextNode("Here's your performance during this training session:"));
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                aboveTableNodeSpan.appendChild(document.createTextNode("The green 'O' indicates where you were correct and "));
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                aboveTableNodeSpan.appendChild(document.createTextNode("The red 'X' indicates where you were incorrect."));
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                if (cond_type=='REF') {
+                  aboveTableNodeSpan.appendChild(document.createTextNode("As you can see, even if 'B' sometimes gave points higher than 50, "));
+                  aboveTableNodeSpan.appendChild(document.createTextNode("or 'A' gave points lower than 50,"));
+                  aboveTableNodeSpan.appendChild(document.createElement("br"));
+                  aboveTableNodeSpan.appendChild(document.createTextNode("the only valuable cards were from deck 'A'."));
+                } else if (cond_type=='VOL') {
+                  aboveTableNodeSpan.appendChild(document.createTextNode("You may recall that this session was longer than the previous one. "));
+                } else { // UNP
 
-              var tbl  = document.createElement('table');
-              tbl.style.width  = '200px';
-              tbl.style.border = '0px';
-
-              for (var i=0; i<5; i++) { // go through rows
-                var tr = tbl.insertRow();
-                for (var j=0; j<n_trials+1; j++) { // go through columns
-                  var td = tr.insertCell();
-                  if (i % 2 == 0) {
-                    let cellContent;
-                    let span = document.createElement('span');
-                    if (i==0 & j==0) {        // label 'A'
-                      span.style.fontSize = "40px";
-                      span.style.float = "left";
-                      cellContent = 'A';
-                    } else if (i==2 & j==0) { // label 'Score:'
-                      span.style.float = "right";
-                      cellContent = 'Score:';
-                    } else if (i==4 & j==0) { // label 'B'
-                      span.style.fontSize = "40px";
-                      span.style.float = "left";
-                      cellContent = 'B';
-                    } else if (i==2) {        // feedback seen
-                      console.log(j);
-                      cellContent = ' '+fb_seen[j-1]+' ';
-                    } else if (i==0) {        // when A was chosen
-                      if (score_arr_modified[j] == 1) {
-                      cellContent = '  O  ';
-                      } else {
-                        cellContent = ' ';
-                      }
-                    } else if (i==4) {        // when B was chosen
-                      if (score_arr_modified[j] == 0) {
-                      cellContent = '  X  ';
-                      } else {
-                        cellContent = ' ';
-                      }
-                    }
-                    else {
-                      cellContent = ' ';
-                    }
-                    cellNode = document.createTextNode(cellContent);
-                    span.appendChild(cellNode);
-
-                    td.appendChild(span);
-                  }
-                  else {
-                    td.appendChild(document.createTextNode(' '));
-                  }
                 }
-              }
-              return tbl;
-            } // end function TableCreate
+                aboveTableNodeSpan.appendChild(document.createElement("br"));
 
-            let tbl       = tableCreate();
-            let divTable  = document.createElement("div"); //create new <div>
-            divTable.appendChild(tbl);
+            // create debriefing feedback table
+            let condtype  = cond_type;
+            let scorearr  = score_arr;
+            let ntrials   = n_trials;
+            let fbseen    = fb_seen;
+            let tbl = debriefTableCreate(condtype,scorearr,ntrials,fbseen); // call the detailed feedback history function from above
 
-            return divTable.innerHTML;
+            // post-feedback table commments
+            let belowTableNodeSpan = document.createElement("span");
+            if (cond_type=='VOL') {
+                belowTableNodeSpan.appendChild(document.createTextNode("Unlike the previous game, where the good source remained constant throughout, "));
+                belowTableNodeSpan.appendChild(document.createElement("br"));
+                belowTableNodeSpan.appendChild(document.createTextNode("the correct source may switch over to the other option at multiple points during the game."));
+                belowTableNodeSpan.appendChild(document.createElement("br"));
+                belowTableNodeSpan.appendChild(document.createTextNode("Note, however, it will not flip over too fast after any given switch."));
+                belowTableNodeSpan.appendChild(document.createElement("br"));
+                belowTableNodeSpan.appendChild(document.createElement("br"));
+            } else if (cond_type=='REF') {
+              belowTableNodeSpan.appendChild(document.createTextNode("Your theoretical true/paid score is: " + score + '/' + n_trials ));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+            }
+            // continue instructions
+            let continueNodeSpan = document.createElement("span");
+                continueNodeSpan.style.fontWeight = 'bold';
+                continueNodeSpan.appendChild(document.createTextNode('Press SPACEBAR to continue'));
+
+            // stack the visuals to be displayed on screen
+            let divDisplay = document.createElement("div"); //create new <div>
+                divDisplay.appendChild(aboveTableNodeSpan);
+                divDisplay.appendChild(document.createElement("br"));
+                divDisplay.appendChild(tbl);
+                divDisplay.appendChild(document.createElement("br"));
+                divDisplay.appendChild(document.createElement("br"));
+                divDisplay.appendChild(belowTableNodeSpan);
+                divDisplay.appendChild(continueNodeSpan);
+
+            return divDisplay.innerHTML;
           },
-          choices: jsPsych.NO_KEYS,
-          trial_duration: 1000
+          choices: [' ']
         };
         timeline.push(trialstim_end_block2);
       }

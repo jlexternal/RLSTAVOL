@@ -4,7 +4,7 @@ function exec_expe(reward_csv) {
     var trialstim_var = {
       type: "html-keyboard-response",
       stimulus: function(){
-        return '<img src="' + stims[0]  + '"/><img src="' + stims[1]  + '" />';
+        return '<img src="' + stims[0]  + '"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
       },
       choices: ['f','j'], // response set
       data: {
@@ -30,10 +30,10 @@ function exec_expe(reward_csv) {
       type: "html-keyboard-response",
       stimulus: function(){
         if (jsPsych.data.get().last(1).values()[0].response == 'f') {
-          return '<img src="' + stims[0]  + '"/><img src="img/shape_blank.png" />';
+          return '<img src="' + stims[0]  + '"/><img src="img/shape_spacer.png" /><img src="img/shape_blank.png" />';
         }
         else {
-          return '<img src="img/shape_blank.png"/><img src="' + stims[1]  + '" />';
+          return '<img src="img/shape_blank.png"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
         }
       },
       trial_duration: function() {
@@ -124,7 +124,7 @@ function exec_expe(reward_csv) {
       buttontext: "Fullscreen",
   data: {trialType: 'instructions'}
   };
-  //timeline.push(fullscreen); debug
+  //timeline.push(fullscreen); //debug
 
   var welcome_block = {
     type: 'html-keyboard-response',
@@ -134,68 +134,61 @@ function exec_expe(reward_csv) {
   };
   timeline.push(welcome_block);
 
-  // instructions about keys go here
-  var instr_gen1 = '<p style = "text-align: center; font-size: 28px">' +
-    "To participate in the experiment you will mainly use two keys, <br><br>" +
-    "'F' and 'J'.<br><br></p>"+
-    '<p style = "font-size: 24px; font-weight: bold">Press \'J\' to continue.</p>';
-  var instr_gen2 = '<p style = "text-align: center; font-size: 28px">' +
-    "If you made it to this page, you've successfully clicked on 'J'!<br>" +
-    '<p style = "font-size: 24px; font-weight: bold">Press \'F\' to go back.<br><br>Press \'J\' to continue.</p>';
-  var instr_gen3 = "In this experiment, you will play 3 simple games where you are trying to <br>" +
-    "identify the source of gold. <br><br>In each game, you will be presented with two sources, <br>" +
-    "and your goal is to figure out which source has true gold.<br><br>The other source, "+
-    "will give you fake gold.<br><br>"+
-    '<p style = "font-size: 24px; font-weight: bold">Press \'F\' to go back.<br><br>Press \'J\' to continue.</p>';
-  var instr_gen4 = 'Each time you choose a source, you will receive points ranging from 0 to 100.<br><br>' +
-    'Both the real gold and the fake gold will give you points,<br>' +
-    'but the real gold tends to give higher points more often.<br><br>' +
-    'Higher, meaning greater than 50.<br><br>' +
-    'Note, however, that real gold may give you low points as well, and that fake gold<br>' +
-    'also provides you with high points.'+
-    '<p style = "font-size: 24px; font-weight: bold">Press \'F\' to go back.<br><br>Press \'J\' to continue.</p>';
-  var instructions_gen = {
-    type: 'instructions',
-    pages: [instr_gen1, instr_gen2, instr_gen3, instr_gen4],
-    key_backward: 'f',
-    key_forward: 'j'
+  // push introductory instructions
+  timeline.push(spit_long_instructions('introduction'));
+
+  // push simple introductory keypress training
+  var instructions_keypress1 = {
+    type: 'html-keyboard-response-min-duration',
+    stimulus: 'To get used to the game\'s dynamics, let\'s draw from one of two decks represented by two symbols.<br><br>'+
+          "You will see two letters, "+'<span style="font-weight:bold">\'A\'</span> and '+
+          '<span style="font-weight:bold">\'B\'.</span><br><br>' +
+          "Choose either A or B by pressing "+'<span style="font-weight:bold">\'F\'</span> ' +
+          'or '+'<span style="font-weight:bold">\'J\'</span>' + ", respectively.<br><br><br>-",
+    minimum_duration: 5000 // blocks participant from continuing too fast
   };
-
-  // debug timeline.push(instructions_gen); // explains what keys the subject will be using
-
-  // segue into training
-  var instructions_keypress = {
+  var instructions_keypress2 = {
     type: 'html-keyboard-response',
-    stimulus: 'Now we will go through some training sessions...<br><br>'+
-          'You will now play an example trial.<br><br>' +
-          "You will see two letters, 'A' and 'B'.<br><br>" +
-          "Choose either A or B by pressing 'F' or 'J', respectively.<br><br>" +
+    stimulus: 'To get used to the game\'s dynamics, let\'s draw from one of two decks represented by two symbols.<br><br>'+
+          "You will see two letters, "+'<span style="font-weight:bold">\'A\'</span> and '+'<span style="font-weight:bold">\'B\'.</span><br><br>' +
+          "Choose either A or B by pressing "+'<span style="font-weight:bold">\'F\'</span> ' + 'or '+'<span style="font-weight:bold">\'J\'</span>' +
+          ", respectively.<br><br>" +
           '<p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>',
     choices: [' ']
   };
-  timeline.push(instructions_keypress);
+  timeline.push(instructions_keypress1,instructions_keypress2);
+
 
   var stims_ab = ['img/shape_train01.png','img/shape_train02.png'];
   var example_trial = {
     type: "html-keyboard-response",
     stimulus: function(){
-      return '<img src="' + stims_ab[0]  + '"/><img src="' + stims_ab[1]  + '" />';
+      return '<img src="' + stims_ab[0]  + '"/><img src="img/shape_spacer.png" /><img src="' + stims_ab[1]  + '" />';
     },
     choices: ['f','j'], // response set
     data: {
       task: 'response'
     }
   };
-  var post_example_trial = {
-    type: "html-keyboard-response",
-    stimulus: 'Each trial begins with the appearance of a cross in the center followed by<br><br>' +
+  var post_example_trial1 = {
+    type: "html-keyboard-response-min-duration",
+    stimulus: 'As you saw, a trial begins with the appearance of a cross in the center followed by<br>' +
       "the presentation of the two options you have.<br><br>" +
-      " You press 'F' for the option on the left and 'J' to choose the option on the right.<br><br>" +
-      "After your choice is made, you will then see the score/weight for the option. And so on and so forth..." +
-      '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>',
+      "After your choice is made, you will then see the points associated with the option.<br><br>" +
+      '<span style = "font-weight: bold">Be sure to pay attention to the location of your desired deck, as they may switch sides from time to time.</span><br><br>' +
+      '-',
+    minimum_duration: 5000
+  };
+  var post_example_trial2 = {
+    type: "html-keyboard-response",
+    stimulus: 'As you saw, a trial begins with the appearance of a cross in the center followed by<br>' +
+      "the presentation of the two options you have.<br><br>" +
+      "After your choice is made, you will then see the points associated with the option.<br><br>" +
+      '<span style = "font-weight: bold">Be sure to pay attention to the location of your desired deck, as they may switch sides from time to time.</span><br><br>' +
+      '<p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>',
     choices: [' ']
   };
-  timeline.push(fixation_fn(debugFlag),example_trial,chosen_trialstim_fn(stims_ab),feedback_fn(50),post_example_trial);
+  timeline.push(fixation_fn(debugFlag),example_trial,chosen_trialstim_fn(stims_ab),feedback_fn(50),post_example_trial1,post_example_trial2);
 
   var n_sessions = 3;
   /* Process reward value array for correct option into JS */
@@ -216,12 +209,40 @@ function exec_expe(reward_csv) {
     rew_corr.push(lines);
   }
 
+  /* Determine order of coniditions based on participant number */
+  var cond_order;
+  if (subj_num % 2 == 1) {
+    cond_order = [1,2,3]; // REF, VOL, UNP
+  } else {
+    cond_order = [1,3,2]; // REF, UNP, VOL
+  }
+
   /* Session loop */
   for (var isesh=0; isesh<n_sessions; isesh++) {
-    var cond_type = cond_types[isesh];
+    let cond_type = cond_types[isesh];
     var n_trials  = rew_corr[isesh].length; // number of trials
     var fb_vals   = rew_corr[isesh];        // feedback values for the correct option
     fb_vals       = fb_vals.map(x => Math.round(x*100));
+
+    /* initial instructions for whatever condition */
+    switch (cond_order[isesh]) {
+      case 1:
+        // instructions for REF condition
+        timeline.push(spit_long_instructions('ref_instructions'));
+        break;
+      case 2:
+        break;
+      case 3:
+        break;
+    }
+
+    var pre_block_ready = {
+      type: 'html-keyboard-response',
+      stimulus: 'When you are ready to begin the real game,<br><br> press <span style="font-weight:bold"> SPACEBAR </span>',
+      choices: [' ']
+    };
+    exec_training(cond_type);
+    timeline.push(pre_block_ready);
 
     /* Generate random placement of the correct choice */
     var cor_locs  = Array.from({length: n_trials}, () => Math.round(Math.random()));
@@ -234,32 +255,6 @@ function exec_expe(reward_csv) {
     else { // for REF and UNP
       stimulis = shapes;
     }
-
-    /* initial instructions for whatever condition */
-    var cond_instr_array;
-    switch (isesh) {
-      case 0:
-        // instructions for REF condition
-        cond_instr_array = ['REF condition instructions'];
-        break;
-      case 1:
-        // instructions for VOL condition
-        cond_instr_array = ['VOL condition instructions'];
-        break;
-      case 2:
-        // instructions for UNP condition
-        cond_instr_array = ['UNP condition instructions'];
-        break;
-    }
-    var cond_instruction = {
-      type: 'html-keyboard-response',
-      stimulus: cond_instr_array,
-      choices: [' '],
-      stimulus_duration: 4000
-    };
-    timeline.push(cond_instruction);
-
-    exec_training(cond_type);
 
     /* Trial loop */
     let iblk_prev;
@@ -323,8 +318,8 @@ function exec_expe(reward_csv) {
       }
       iblk_prev = idx_blocks[itrl]; // block index on the previous trial; there should be no calls of iblk_prev after this assignment
 
-      var trialstim = trialstim_fn(stims,cor_choice); // choice options stimulus
-      var chosen_trialstim = chosen_trialstim_fn(stims); // choice option chosen stimulus
+      var trialstim        = trialstim_fn(stims,cor_choice); // choice options stimulus
+      var chosen_trialstim = chosen_trialstim_fn(stims);     // choice option chosen stimulus
 
       let val = fb_vals[itrl];
       var feedback = feedback_fn(val); // feedback stimulus

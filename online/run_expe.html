@@ -5,8 +5,10 @@
     <script src ="jspsych-6.3.0/jspsych.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response-min-duration.js"></script>
-    <script src ="jspsych-6.3.0/plugins/jspsych-image-keyboard-response.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response-faded.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-html-keyboard-response-sequential-faded.js"></script> <!--testing  -->
     <script src ="jspsych-6.3.0/plugins/jspsych-instructions.js"></script>
+    <script src ="jspsych-6.3.0/plugins/jspsych-instructions-faded.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-preload.js"></script>
     <script src ="jspsych-6.3.0/plugins/jspsych-fullscreen.js"></script>
     <script src ="jquery/jquery-3.6.0.js"></script>  <!-- to use AJAX -->
@@ -16,6 +18,7 @@
     <script src="exec_training.js"></script>
     <script src="spit_long_instructions.js"></script>
     <script src="debriefTableCreate.js"></script>
+    <script src="duration_fn.js"></script>
   </head>
   <body></body>
   <script>
@@ -52,8 +55,10 @@
             console.log('block index csv file GET failed');
           },
           success:  function(data) {
-            var block_indices = data.split(',').map(Number);
-            idx_blocks = block_indices;
+            // the block indices correspond to whatever order traj.csv is in
+            var block_indices = data.split(/\r\n|\n/);
+            idx_blocks[0] = block_indices[0].split(',').map(Number);
+            idx_blocks[1] = block_indices[1].split(',').map(Number);
             console.log('block index csv file GET succeeded');
           }
        });

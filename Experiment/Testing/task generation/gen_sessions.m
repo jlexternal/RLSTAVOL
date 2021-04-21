@@ -1,10 +1,8 @@
-% script gen_task
+function out = gen_sessions
+% outputs 1 session each of REF, VOL, and UNP in that indexed order
+
 
 % Note: Generates the UNP condition by modulating the MEAN
-clc
-close all
-clear all
-
 rngseed = 'shuffle';
 % set global random number stream
 rng = RandStream('mt19937ar','Seed',rngseed);
@@ -241,6 +239,7 @@ for icond = [1 3]
         % catch potential infinite loop cycle
         if loop_ctr > 10000
             disp('Loops is in it''s 10000th iteration... may be stuck...')
+            %debug figure out a way to restart the code when it is completely stuck
         end
         if loop_ctr > 1e6
             error('Loop stuck in infinite cycle!');
@@ -254,100 +253,11 @@ for iepi = 1:nepis
     idx_epi(epiorder(iepi):epiend(iepi)) = iepi;
 end
 
-%% Run KF on blocks
-
-sim_out = cell(1,3);
-for i = 1:3
-    cfg          = struct;
-    cfg.epis     = epis(i,:);
-    cfg.traj     = traj(i,:);
-    cfg.vs       = vs;
-    cfg.epistart = epiorder;    
-    if i == 2
-        cfg.isvol = true;
-        cfg.vd    = vd;
-    else
-        cfg.isvol = false;
-        cfg.vd    = 0;
-    end
-    sim_out{i} = sim_KF(cfg);
+out = struct;
+out.epis = epis;
+out.traj = traj;
+out.vs   = vs;
+out.vd   = vd;
+out.idx_epi = idx_epi;
+out.epiorder = epiorder;
 end
-
-% visualize task to determine feasibility for humans (and not KF)
-nt = nt_final;
-if true
-    condstr = {'REF','VOL','UNP'};
-    figure(1)
-    clf
-    for i = 1:3
-        subplot(3,3,i);
-        hold on
-        xlim([0 nt_final]);
-        ylim([0 1]);
-        scatter(1:nt_final,traj(i,:));
-        plot(epis(i,:),'LineWidth',2);
-        % KF results
-        shadedErrorBar(1:nt,sim_out{i}.mt(1:nt),sqrt(sim_out{i}.vt(1:nt)),'lineprops',{'b','LineWidth',2},'patchSaturation',.1);
-        for iepi = 1:5
-            xline(epiorder(iepi));
-        end
-        yline(.5,'--','LineWidth',2);
-        title(condstr(i));
-        % square root of the posterior variance
-        subplot(3,3,3+i)
-        hold on
-        ylim([0 .13]);
-        plot(1:nt,sqrt(sim_out{i}.vt));
-        % kalman gain
-        subplot(3,3,6+i)
-        hold on
-        ylim([0 1]);
-        plot(1:nt,sim_out{i}.kt);
-    end
-end
-
-%% use sessions generating function 
-out = {};
-out{1} = gen_sessions;
-out{2} = gen_sessions;
-
-%% Generate output CSVs for the online experiment (2 sets of the complete 3 session task)
-
-traj_out = [out{1}.traj; out{2}.traj];
-idx_epi = [out{1}.idx_epi; out{2}.idx_epi];
-for i = 1:2
-    ind_even = mod(out{i}.idx_epi,2)==0;
-    traj_out([1:3]+(3*(i-1)),ind_even==1) = 1-traj_out([1:3]+(3*(i-1)),ind_even==1);
-end
-% export data for online experiment
-%   traj_out:   the reward value for the CORRECT OPTION
-%   idx_epi:    block label for each trial (to identify new/switch trials)
-csvwrite('traj.csv',traj_out);
-csvwrite('idx_epi.csv',idx_epi);
-
-%% visualize reward distribution
-figure(2)
-clf
-title('Reward distributions (mean(UNP) < mean(REF))','FontSize',14)
-hold on
-for i = 1:3
-    traj_pos = get_pr(epis_all(i,:),vs);
-    % plot
-    colors = get(gca,'ColorOrder');
-    set(gca,'ColorOrderIndex',i);
-    hfitBeta                        = histfit(traj_pos,30,'beta');
-    hfitBeta(1).HandleVisibility    = 'off';
-    hfitBeta(1).FaceAlpha           = 0.5;
-    hfitBeta(1).EdgeAlpha           = 0;
-    hfitBeta(2).Color               = colors(i,:);
-    hfitBeta(2).LineStyle           = ':';
-    hfitBeta(2).HandleVisibility    = 'off';
-    
-    xline(mean(traj_pos),'Color',colors(i,:),'LineWidth',3);
-    legend({'REF','VOL','UNP'});
-end
-xline(.5,'LineStyle','--','HandleVisibility','off');
-xlim([0 1]);
-
-
-

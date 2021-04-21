@@ -1,20 +1,23 @@
 /**
- * jspsych-html-keyboard-response-min-duration
- * Josh de Leeuw
+ * jspsych-html-keyboard-response-faded
  *
- * plugin for displaying a stimulus and getting a keyboard response
+ * Original by Josh de Leeuw
+ * Fade in/out functionality added by Jun Seok LEE
+ * REQUIREMENTS: jQuery
+ *
+ * plugin for fading in/out a stimulus and getting a keyboard response
  *
  * documentation: docs.jspsych.org
  *
  **/
 
 
-jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
+jsPsych.plugins["html-keyboard-response-faded"] = (function() {
 
   var plugin = {};
 
   plugin.info = {
-    name: 'html-keyboard-response-min-duration',
+    name: 'html-keyboard-response-faded',
     description: '',
     parameters: {
       stimulus: {
@@ -54,30 +57,45 @@ jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
         default: true,
         description: 'If true, trial will end when subject makes a response.'
       },
+      fadein_duration: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Fade in duration',
+        default: 1000,
+        description: 'How long in milliseconds to fade in stimuli.'
+      },
+      fadeout_duration: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Fade out duration',
+        default: 500,
+        description: 'How long in milliseconds to fade out stimuli.'
+      },
       minimum_duration: {
         type: jsPsych.plugins.parameterType.INT,
         pretty_name: 'Minimum duration',
         default: null,
-        description: 'Minimum duration before any keyboard input is taken.'
+        description: 'Minimum duration after page is fully loaded before any keyboard input is taken.'
       },
-
-
     }
   }
 
   plugin.trial = function(display_element, trial) {
 
-    trial.trial_duration = trial.minimum_duration;
-
-    var new_html = '<div id="jspsych-html-keyboard-response-min-duration-stimulus">'+trial.stimulus+'</div>';
+    var new_html = '<div id="jspsych-html-keyboard-response-faded-stimulus"; ' +
+                        'class="hidden"; ' +
+                        'style="display:none">' + trial.stimulus + '</div>';
 
     // add prompt
     if(trial.prompt !== null){
       new_html += trial.prompt;
     }
 
-    // draw
+    // set content to be drawn
     display_element.innerHTML = new_html;
+
+    // fade in
+    $(document).ready(function() {
+        $('div.hidden').fadeIn(trial.fadein_duration);
+    });
 
     // store response
     var response = {
@@ -104,7 +122,7 @@ jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
       };
 
       // clear the display
-      display_element.innerHTML = '';
+      //display_element.innerHTML = '<div class="hidden"> </div>';
 
       // move on to the next trial
       jsPsych.finishTrial(trial_data);
@@ -115,7 +133,7 @@ jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
 
       // after a valid response, the stimulus will have the CSS class 'responded'
       // which can be used to provide visual feedback that a response was recorded
-      //display_element.querySelector('#jspsych-html-keyboard-response-stimulus-min-duration').className += ' responded';
+      //display_element.querySelector('#jspsych-html-keyboard-response-faded-stimulus').className += ' responded';
 
       // only record the first response
       if (response.key == null) {
@@ -123,9 +141,18 @@ jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
       }
 
       if (trial.response_ends_trial) {
-        end_trial();
+        // fade out
+        $(document).ready(function() {
+            $('div.hidden').fadeOut(trial.fadeout_duration);
+        });
+        jsPsych.pluginAPI.setTimeout(function() {
+          end_trial();
+        }, trial.fadeout_duration);
       }
     };
+
+    // total duration of key freeze
+    min_timeout_duration = trial.fadein_duration + trial.minimum_duration;
 
     // start the response listener
     jsPsych.pluginAPI.setTimeout(function() {
@@ -138,21 +165,26 @@ jsPsych.plugins["html-keyboard-response-min-duration"] = (function() {
           allow_held_key: false
         });
       }
-    }, trial.minimum_duration);
 
-    // hide stimulus if stimulus_duration is set
-    if (trial.stimulus_duration !== null) {
-      jsPsych.pluginAPI.setTimeout(function() {
-        display_element.querySelector('#jspsych-html-keyboard-response-stimulus-min-duration').style.visibility = 'hidden';
-      }, trial.stimulus_duration);
-    }
+      // hide stimulus if stimulus_duration is set
+      if (trial.stimulus_duration !== null) {
+        jsPsych.pluginAPI.setTimeout(function() {
+          display_element.querySelector('#jspsych-html-keyboard-response-faded-stimulus').style.visibility = 'hidden';
+        }, trial.stimulus_duration);
+      }
 
-    // end trial if trial_duration is set
-    if (trial.trial_duration !== null) {
-      jsPsych.pluginAPI.setTimeout(function() {
-        end_trial();
-      }, trial.trial_duration);
-    }
+      // end trial if trial_duration is set
+      if (trial.trial_duration !== null) {
+        leaving_timeout_duration = Math.max(trial.trial_duration,trial.fadeout_duration);
+        $(document).ready(function() {
+            $('div.hidden').fadeOut(trial.fadeout_duration);
+        });
+        jsPsych.pluginAPI.setTimeout(function() {
+          end_trial();
+        }, leaving_timeout_duration);
+      }
+
+    }, min_timeout_duration);
 
   };
 

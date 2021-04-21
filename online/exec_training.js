@@ -51,26 +51,58 @@ function exec_training(cond_type) {
 
   /* Load feedback for the respective training session */
   var fb_session;
+  var cond_num;
   switch(cond_type) {
     case 'REF':
       fb_session = feedback_all[0];
+      cond_num = 1;
       break;
     case 'VOL':
       fb_session = feedback_all[1];
+      cond_num = 2;
       break;
     case 'UNP':
       fb_session = feedback_all[2];
+      cond_num = 3;
       break;
   }
 
   var choice_opts = ['f','j'];          // set of available keys to choices
   var n_blocks    = fb_session.length;  // number of blocks in specified training session
 
+
+  // preblock label
+  function pre_training_block_label_fn(cond_num,iround,nround) {
+    var pre_block_label = {
+      // display round number if REF or UNP
+      type: 'html-keyboard-response-faded',
+      stimulus: function() {
+        var stim_text;
+        if (cond_num != 2) { // REF and UNP
+          stim_text = '<p style = "font-size: 28px; font-weight: bold">Training</p><br><br>' +
+          'Round ' + iround + '/' + nround;
+        } else { // VOL
+          stim_text = '<p style = "font-size: 28px; font-weight: bold">Training</p><br><br>' +
+          'Single long round';
+        }
+        return stim_text;
+      },
+      minimum_duration: duration_fn(debugFlag,1000,200),
+      choices: jsPsych.NO_KEYS,
+      fadein_duration: duration_fn(debugFlag,2000,200),
+      fadeout_duration: duration_fn(debugFlag,2000,200),
+      trial_duration: duration_fn(debugFlag,1000,100),
+    };
+    return pre_block_label;
+  }
+
   // block loop
   for (iblk=0; iblk<n_blocks; iblk++) {
     let fb_vals   = fb_session[iblk]; // array of feedback for the given block
     let n_trials  = fb_vals.length;   // number of trials for given block
     let curr_iblk = iblk;
+
+    timeline.push(pre_training_block_label_fn(cond_num,iblk+1,n_blocks));
 
     /* Generate random placement of the correct choice
         The correct choice however, is always the shape_train01 */
@@ -122,14 +154,7 @@ function exec_training(cond_type) {
             return '<img src="img/shape_blank.png"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
           }
         },
-        trial_duration: function() {
-          if (debugFlag) {
-            return 100;
-          }
-          else {
-            return 500;
-          }
-        },
+        trial_duration: duration_fn(debugFlag,500,100),
         choices: jsPsych.NO_KEYS
       };
 
@@ -154,14 +179,7 @@ function exec_training(cond_type) {
           return '<div style="font-size:60px;">'+fb_str+'</div>';
         },
         choices: jsPsych.NO_KEYS,
-        trial_duration: function() {
-          if (debugFlag) {
-            return 100;
-          }
-          else {
-            return 1000;
-          }
-        },
+        trial_duration: duration_fn(debugFlag,1000,100),
       };
 
       // fixation cross stimuli
@@ -196,12 +214,12 @@ function exec_training(cond_type) {
             return 'end of training block: ' + score + '/' + n_trials;
           },
           choices: jsPsych.NO_KEYS,
-          trial_duration: 1000
+          trial_duration: duration_fn(debugFlag,1000,100),
         };
         timeline.push(trialstim_end_block);
 
-        var trialstim_end_block2 = {
-          type: 'html-keyboard-response',
+        var trialstim_end_feedback_total = {
+          type: 'html-keyboard-response-faded',
           stimulus: function() {
             var fb_seen = [];
             for (var i=0; i<fb_session[curr_iblk].length; i++) {
@@ -212,24 +230,48 @@ function exec_training(cond_type) {
               }
             }
             // preface to the feedback table
+            let boldANodeSpan = document.createElement("span");
+                boldANodeSpan.style.fontWeight = "bold";
+                boldANodeSpan.appendChild(document.createTextNode("A"));
+            let boldBNodeSpan = document.createElement("span");
+                boldBNodeSpan.style.fontWeight = "bold";
+                boldBNodeSpan.appendChild(document.createTextNode("A"));
+
             let aboveTableNodeSpan = document.createElement("span");
                 aboveTableNodeSpan.appendChild(document.createTextNode("Here's your performance during this training session:"));
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
-                aboveTableNodeSpan.appendChild(document.createTextNode("The green 'O' indicates where you were correct and "));
+                  greenTextNodeSpan = document.createElement("span");
+                  greenTextNodeSpan.style.color = "green";
+                  greenTextNodeSpan.style.fontWeight  = "bold";
+                  greenTextNodeSpan.appendChild(document.createTextNode('O'));
+                aboveTableNodeSpan.appendChild(document.createTextNode("The green "));
+                aboveTableNodeSpan.appendChild(greenTextNodeSpan);
+                aboveTableNodeSpan.appendChild(document.createTextNode(" indicates where you were correct and "));
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
-                aboveTableNodeSpan.appendChild(document.createTextNode("The red 'X' indicates where you were incorrect."));
+                  redTextNodeSpan = document.createElement("span");
+                  redTextNodeSpan.style.color = "red";
+                  redTextNodeSpan.style.fontWeight  = "bold";
+                  redTextNodeSpan.appendChild(document.createTextNode('X'));
+                aboveTableNodeSpan.appendChild(document.createTextNode("The red "));
+                aboveTableNodeSpan.appendChild(redTextNodeSpan);
+                aboveTableNodeSpan.appendChild(document.createTextNode(" indicates where you were incorrect."));
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
                 if (cond_type=='REF') {
-                  aboveTableNodeSpan.appendChild(document.createTextNode("As you can see, even if 'B' sometimes gave points higher than 50, "));
-                  aboveTableNodeSpan.appendChild(document.createTextNode("or 'A' gave points lower than 50,"));
+                  aboveTableNodeSpan.appendChild(document.createTextNode("As you can see, even if "));
+                  aboveTableNodeSpan.appendChild(boldBNodeSpan);
+                  aboveTableNodeSpan.appendChild(document.createTextNode(" sometimes gave points higher than 50, or "))
+                  aboveTableNodeSpan.appendChild(boldANodeSpan);
+                  aboveTableNodeSpan.appendChild(document.createTextNode(" gave points lower than 50,"));
                   aboveTableNodeSpan.appendChild(document.createElement("br"));
-                  aboveTableNodeSpan.appendChild(document.createTextNode("the only valuable cards were from deck 'A'."));
+                  aboveTableNodeSpan.appendChild(document.createTextNode("the only valuable cards were from deck "));
+                  aboveTableNodeSpan.appendChild(boldANodeSpan);
+                  aboveTableNodeSpan.appendChild(document.createTextNode("."));
                 } else if (cond_type=='VOL') {
-                  aboveTableNodeSpan.appendChild(document.createTextNode("You may recall that this session was longer than the previous one. "));
-                } else { // UNP
 
+                } else { // UNP
+                  aboveTableNodeSpan.appendChild(document.createTextNode("As you saw, the values for both decks fluctuated more wildly than with the first game."));
                 }
                 aboveTableNodeSpan.appendChild(document.createElement("br"));
 
@@ -243,22 +285,31 @@ function exec_training(cond_type) {
             // post-feedback table commments
             let belowTableNodeSpan = document.createElement("span");
             if (cond_type=='VOL') {
-                belowTableNodeSpan.appendChild(document.createTextNode("Unlike the previous game, where the good source remained constant throughout, "));
-                belowTableNodeSpan.appendChild(document.createElement("br"));
-                belowTableNodeSpan.appendChild(document.createTextNode("the correct source may switch over to the other option at multiple points during the game."));
-                belowTableNodeSpan.appendChild(document.createElement("br"));
-                belowTableNodeSpan.appendChild(document.createTextNode("Note, however, it will not flip over too fast after any given switch."));
-                belowTableNodeSpan.appendChild(document.createElement("br"));
-                belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createTextNode("The debriefing above shows that the valuable cards switched to the other deck once during the round."));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createTextNode("During the real game, this can happen multiple times."));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createTextNode("Note, however, it will not flip over too fast after any given switch."));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableNodeSpan.appendChild(document.createElement("br"));
+
             } else if (cond_type=='REF') {
-              belowTableNodeSpan.appendChild(document.createTextNode("Your theoretical true/paid score is: " + score + '/' + n_trials ));
+
+            } else { // UNP
+              belowTableNodeSpan.appendChild(document.createTextNode("It is up to you to figure out which is the valuable deck."));
               belowTableNodeSpan.appendChild(document.createElement("br"));
               belowTableNodeSpan.appendChild(document.createElement("br"));
             }
+            belowTableNodeSpan.appendChild(document.createTextNode("Your theoretical true/paid score is: " + score + '/' + n_trials ));
+            belowTableNodeSpan.appendChild(document.createElement("br"));
+            belowTableNodeSpan.appendChild(document.createElement("br"));
+
             // continue instructions
             let continueNodeSpan = document.createElement("span");
                 continueNodeSpan.style.fontWeight = 'bold';
-                continueNodeSpan.appendChild(document.createTextNode('Press SPACEBAR to continue'));
+                continueNodeSpan.appendChild(document.createTextNode('Press spacebar to continue'));
 
             // stack the visuals to be displayed on screen
             let divDisplay = document.createElement("div"); //create new <div>
@@ -272,9 +323,10 @@ function exec_training(cond_type) {
 
             return divDisplay.innerHTML;
           },
-          choices: [' ']
+          choices: [' '],
+          fadein_duration: 500
         };
-        timeline.push(trialstim_end_block2);
+        timeline.push(trialstim_end_feedback_total);
       }
 
     } // end trial loop

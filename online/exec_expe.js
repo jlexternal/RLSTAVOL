@@ -11,7 +11,7 @@ function exec_expe(reward_csv) {
           return '<img src="img/shape_blank.png"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
         }
       },
-      trial_duration: duration_fn(debugFlag,500,100),
+      trial_duration: duration_fn(debugFlag,500,10000),
       choices: jsPsych.NO_KEYS
     };
     return chosen_trialstim_var;
@@ -56,7 +56,7 @@ function exec_expe(reward_csv) {
           if (longDurationFlag) {
             return 1250;
           } else {
-            return 200;
+            return 100;
           }
         }
         else {
@@ -86,10 +86,10 @@ function exec_expe(reward_csv) {
         }
         return stim_text;
       },
-      minimum_duration: duration_fn(debugFlag,1000,200),
+      minimum_duration: duration_fn(debugFlag,1000,400),
       choices: jsPsych.NO_KEYS,
       fadein_duration: duration_fn(debugFlag,2000,100),
-      fadeout_duration: duration_fn(debugFlag,2000,100),
+      fadeout_duration: duration_fn(debugFlag,200,100),
       trial_duration: duration_fn(debugFlag,1000,100),
     };
     return pre_block_label;
@@ -100,7 +100,7 @@ function exec_expe(reward_csv) {
       stimulus: function () {
         let igame = isesh + 1;
         return 'End of Game ' + igame +
-        '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>';
+        '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue to the next game.</p>';
       },
       choices: [' ']
     };
@@ -116,6 +116,11 @@ function exec_expe(reward_csv) {
     shapes.push(imgStr);
   }
   shapes.push('img/shape_blank.png'); // to replace unchosen shape
+
+  // randomize the shapes to be presented
+  var shape_pairs_randomized1 = jsPsych.randomization.shuffle([...Array(10).keys()]);
+  var shape_pairs_randomized2 = jsPsych.randomization.shuffle([...Array(10).keys()]);
+  shape_pairs_randomized2 = shape_pairs_randomized2.map(x => x+10);
 
   /* Preload .PNG files to be used as stimuli */
   var preload = {
@@ -146,13 +151,11 @@ function exec_expe(reward_csv) {
       return stim;
     },
     choices: [' '],
-    fadein_duration: duration_fn(debugFlag,2000,200),
-    fadeout_duration: duration_fn(debugFlag,1000,200),
-    individual_durations: function () {
-      var dura = {
-        durations: [1000,100]
-      };
-      return dura;
+    fadein_duration: duration_fn(debugFlag,2000,100),
+    fadeout_duration: duration_fn(debugFlag,200,100),
+    individual_durations: function() {
+      var dura_arr = [1500,200];
+      return multiduration_fn(debugFlag,dura_arr,100);
     }
   };
   timeline.push(welcome_block);
@@ -178,9 +181,9 @@ function exec_expe(reward_csv) {
         return stim;
       },
     choices: [' '],
-    fadein_duration: duration_fn(debugFlag,1000,200),
-    fadeout_duration: duration_fn(debugFlag,1000,200),
-    minimum_duration: duration_fn(debugFlag,1000,200),
+    fadein_duration: duration_fn(debugFlag,1000,100),
+    fadeout_duration: duration_fn(debugFlag,200,100),
+    minimum_duration: duration_fn(debugFlag,1000,100),
   };
   timeline.push(instructions_keypress);
 
@@ -212,13 +215,13 @@ function exec_expe(reward_csv) {
       return stim;
     },
     choices: [' '],
-    fadein_duration: duration_fn(debugFlag,1000,200),
-    fadeout_duration: duration_fn(debugFlag,1000,200),
-    minimum_duration: duration_fn(debugFlag,2000,200),
+    fadein_duration: duration_fn(debugFlag,1000,100),
+    fadeout_duration: duration_fn(debugFlag,200,100),
+    minimum_duration: duration_fn(debugFlag,2000,100),
   };
   timeline.push(fixation_fn(debugFlag),example_trial,chosen_trialstim_fn(stims_ab),feedback_fn(50),post_example_trial);
 
-  var n_sessions = 6; //debug 6 in final
+  var n_sessions = 6; // hard-coded
   var choice_opts = ['f','j']; // set of available keys to choices
   var cond_types  = ['REF','VOL','UNP'];
 
@@ -253,7 +256,7 @@ function exec_expe(reward_csv) {
 
     let cond_type = cond_types[isesh];
     let game_label;
-    var n_trials  = 5; //rew_corr[isesh].length; // number of trials //debug
+    var n_trials  = rew_corr[isesh].length; // number of trials
     var fb_vals   = rew_corr[isesh];        // feedback values for the correct option
     fb_vals       = fb_vals.map(x => Math.round(x*100));
 
@@ -288,7 +291,7 @@ function exec_expe(reward_csv) {
       type: 'html-keyboard-response-faded',
       stimulus: 'When you are ready to begin,<br><br> press <span style="font-weight:bold"> spacebar </span>',
       choices: [' '],
-      minimum_duration: duration_fn(debugFlag,1000,200),
+      minimum_duration: duration_fn(debugFlag,1000,100),
     };
     timeline.push(pre_block_ready);
 
@@ -320,8 +323,9 @@ function exec_expe(reward_csv) {
     		buttontext: "Continue"
       };
 
-      let iblk_curr   = idx_blocks[idx_blocks_half][itrl]; // block index on current trial; starts from 1 (imported from MATLAB)
-      var n_blocks = 5;
+      let iblk_curr = idx_blocks[idx_blocks_half][itrl]; // block index on current trial; starts from 1 (imported from MATLAB)
+      var n_blocks  = 5;
+
       var pre_block_label;
       if (cond_order[isesh] != 2) { // REF and UNP
         if (itrl==0 | iblk_curr != iblk_prev) {
@@ -346,8 +350,15 @@ function exec_expe(reward_csv) {
       }
       /* Local declaration of the current shape set */
       let stims;
-      if (isesh != 1) { // for REF and UNP, need to cycle through shapes
-        stims = [stimulis[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)], stimulis[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]];
+      if (cond_order[isesh] != 2) { // for REF and UNP, need to cycle through shapes
+        // the randomization was determined at the beginning of the script.
+        if (isesh < 3) {
+          stims = [stimulis[shape_pairs_randomized1[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
+                   stimulis[shape_pairs_randomized1[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
+        } else {
+          stims = [stimulis[shape_pairs_randomized2[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
+                   stimulis[shape_pairs_randomized2[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
+        }
       }
       else { // for VOL, maintain the same shape set for entire session
         stims = [stimulis[stim_loc], stimulis[-stim_loc+1]];
@@ -413,7 +424,7 @@ function exec_expe(reward_csv) {
         type: 'html-keyboard-response',
         stimulus: itrl+1,
         choices: jsPsych.NO_KEYS,
-        trial_duration: 100
+        trial_duration: 10
       };
 
       var debug_data2 = { // feedback for correct/incorrect
@@ -427,7 +438,7 @@ function exec_expe(reward_csv) {
           }
         },
         choices: jsPsych.NO_KEYS,
-        trial_duration: 100
+        trial_duration: 10
       };
 
       // initial fixation stimulus push
@@ -451,16 +462,24 @@ function exec_expe(reward_csv) {
             let igame = isesh+1;
             return 'Your total score for <span style = "font-weight:bold">Game '+ igame + '</span>' +
               ' is <br><br><span style = "font-size: 32px">' + score + '/' + n_trials + '</span>' +
-              '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue to the next game.</p>';
+              '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue</p>';
           },
           choices: [' '],
           minimum_duration: duration_fn(debugFlag,null,null),
         };
-        timeline.push(end_session_stim_fn(isesh),trialstim_end_block_feedback);
+        timeline.push(trialstim_end_block_feedback,end_session_stim_fn(isesh));
       }
     } // end trial loop
   } // end block loop
 
+  // end of experiment presentation
+  var end_experiment_stim = {
+    type: 'html-keyboard-response',
+    stimulus: 'End of experiment.<br><br>Thank you for your participation!',
+    choices: [' '],
+    minimum_duration: 1000
+  };
+  timeline.push(end_experiment_stim);
 
   /* Start the experiment */
   jsPsych.init({

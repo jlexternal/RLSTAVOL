@@ -138,8 +138,6 @@ jsPsych.plugins["html-keyboard-response-sequential-faded"] = (function() {
       delays.push(arrSum(ind_durations.slice(0,i+1)));
     }
 
-    console.log(delays)
-    console.log(ind_durations)
     // fade in sequentially
     $(document).ready(function() {
         $('.words').each(function (i) {

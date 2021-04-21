@@ -44,8 +44,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 
@@ -63,8 +63,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 
@@ -83,8 +83,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 
@@ -100,8 +100,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 
@@ -110,8 +110,8 @@ switch (instr_type) {
   case 'vol_instructions':
     instr_gen1 = { stimuli: [
       'This is a game with a single long round.<br><br>',
-      'The set of symbols will remain consistent throughout the game, but the valuable deck may switch<br>' +
-      'from one to the other at random points during the game.<br><br>',
+      'Here, the set of symbols will be replaced with 2 circles colored orange and blue for the entirety of the game.<br><br>'+
+      'The difference in this game is that the valuable deck may switch from one to the other<br> at random points during the game.<br><br>',
       'As with the previous game, the points you receive will clue you in on whether the switch is happening<br>' +
       'or has already happened.<br><br>',
       '<span style = "text-style: italic"><span style ="font-weight: bold">Note:</span> '+
@@ -123,8 +123,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 
@@ -141,8 +141,8 @@ switch (instr_type) {
       type: 'html-keyboard-response-sequential-faded',
       stimulus: instr_gen1,
       choices: [' '],
-      fadein_duration: duration_fn(debugFlag,1000,200),
-      fadeout_duration: duration_fn(debugFlag,1000,200),
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,1000,100),
     };
     break;
 

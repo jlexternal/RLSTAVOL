@@ -46,7 +46,7 @@ function exec_training(cond_type) {
     [[66, 41, 69, 50, 56, 55, 75, 78, /*switch point*/ 52, 33, 45, 50, 49, 23, 73, 46, 44, 37, 36, 26]],
     /* UNP */
      // values which fluctuate more wildly and hit closer to the extremes
-    [[1,2,3]]
+    [[61, 62, 33, 57, 32, 46, 53, 67, 36, 68, 56, 54, 48, 41, 68, 57, 59, 72, 59, 43]]
   ];
 
   /* Load feedback for the respective training session */
@@ -87,10 +87,10 @@ function exec_training(cond_type) {
         }
         return stim_text;
       },
-      minimum_duration: duration_fn(debugFlag,1000,200),
+      minimum_duration: duration_fn(debugFlag,1000,100),
       choices: jsPsych.NO_KEYS,
-      fadein_duration: duration_fn(debugFlag,2000,200),
-      fadeout_duration: duration_fn(debugFlag,2000,200),
+      fadein_duration: duration_fn(debugFlag,2000,100),
+      fadeout_duration: duration_fn(debugFlag,2000,100),
       trial_duration: duration_fn(debugFlag,1000,100),
     };
     return pre_block_label;

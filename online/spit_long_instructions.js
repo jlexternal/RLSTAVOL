@@ -24,6 +24,25 @@ switch (instr_type) {
     };
     break;
 
+  case 'keypress':
+    instr_gen1 = { stimuli: [
+      'In our experiment, you will play a game where you draw from one of two decks of cards represented by two symbols.<br><br>',
+      "For now, we will represent the two decks with letters: <br>"+
+      '<span style="font-weight:bold">A</span> and '+'<span style="font-weight:bold">B.</span><br><br>',
+      'Choose either <span style="font-weight:bold">A</span> or <span style="font-weight:bold">B</span> by pressing '+'<span style="font-weight:bold">F</span> ' +
+      'or '+'<span style="font-weight:bold">J</span>, respectively.<br><br>',
+      '<p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>']
+    };
+    instructions_var = {
+      type: 'html-keyboard-response-sequential-faded',
+      stimulus: instr_gen1,
+      choices: [' '],
+      fadein_duration: duration_fn(debugFlag,1000,100),
+      fadeout_duration: duration_fn(debugFlag,200,100),
+      minimum_duration: duration_fn(debugFlag,1000,100),
+    };
+    break;
+
   // instructions page about the number of "games" and that certain games have multiple rounds
   case 'rounds':
     instr_gen1 = { stimuli: [

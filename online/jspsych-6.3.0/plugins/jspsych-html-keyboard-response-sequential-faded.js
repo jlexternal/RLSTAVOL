@@ -115,8 +115,8 @@ jsPsych.plugins["html-keyboard-response-sequential-faded"] = (function() {
 
     //loop through the different stimuli and assign them in individual div containers (automatic naming)
     for (i=0; i<trial.stimulus.stimuli.length; i++) {
-      let div_label = '<div id = "word'+ i + '" class ="words"';
-      let div_wrapped_stim = div_label + '"; style="display:none">' +
+      let div_label = '<div id = "word'+ i + '" class = "words"';
+      let div_wrapped_stim = div_label + '"; style = "opacity: 0">' +
                              trial.stimulus.stimuli[i] + '</div>';
       stimuli_html = stimuli_html+div_wrapped_stim;
       div_labels = div_labels + div_label;
@@ -141,7 +141,7 @@ jsPsych.plugins["html-keyboard-response-sequential-faded"] = (function() {
     // fade in sequentially
     $(document).ready(function() {
         $('.words').each(function (i) {
-          $(this).delay(delays[i]).fadeIn(ind_durations[i]);
+          $(this).delay(delays[i]).animate({"opacity": "1"},ind_durations[i]);
         });
     });
 

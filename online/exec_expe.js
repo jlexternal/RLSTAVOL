@@ -11,7 +11,7 @@ function exec_expe(reward_csv) {
           return '<img src="img/shape_blank.png"/><img src="img/shape_spacer.png" /><img src="' + stims[1]  + '" />';
         }
       },
-      trial_duration: duration_fn(debugFlag,500,10000),
+      trial_duration: duration_fn(debugFlag,500,100),
       choices: jsPsych.NO_KEYS
     };
     return chosen_trialstim_var;
@@ -99,8 +99,8 @@ function exec_expe(reward_csv) {
       type: 'html-keyboard-response-min-duration',
       stimulus: function () {
         let igame = isesh + 1;
-        return 'End of Game ' + igame +
-        '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue to the next game.</p>';
+        return '<p style = "text-align: center; font-size: 28px">End of Game ' + igame +
+        '</p><br><br><p style = "text-align: center; font-size: 20px; font-weight: bold">Press spacebar to continue to the next game.</p>';
       },
       choices: [' ']
     };
@@ -111,16 +111,15 @@ function exec_expe(reward_csv) {
 
   // need to load new shapes for UNP
   var shapes = [];
-  for (var i = 1; i<13; i++) {
+  for (var i = 1; i<21; i++) {
     let imgStr = 'img/shape' + (i.toString()).padStart(2,'0') + '.png';
     shapes.push(imgStr);
   }
   shapes.push('img/shape_blank.png'); // to replace unchosen shape
 
   // randomize the shapes to be presented
-  var shape_pairs_randomized1 = jsPsych.randomization.shuffle([...Array(10).keys()]);
-  var shape_pairs_randomized2 = jsPsych.randomization.shuffle([...Array(10).keys()]);
-  shape_pairs_randomized2 = shape_pairs_randomized2.map(x => x+10);
+  var shape_pairs_randomized1 = jsPsych.randomization.shuffle([...Array(20).keys()]); // for 1st half of experiment
+  var shape_pairs_randomized2 = jsPsych.randomization.shuffle([...Array(20).keys()]); // for 2nd half
 
   /* Preload .PNG files to be used as stimuli */
   var preload = {
@@ -165,27 +164,8 @@ function exec_expe(reward_csv) {
 
   // push introductory instructions
   timeline.push(spit_long_instructions('introduction'));
-
   // push simple introductory keypress training
-  var instructions_keypress = {
-    type: 'html-keyboard-response-sequential-faded',
-    stimulus: function () {
-      var stim = {
-        stimuli: ['In our experiment, you will play a game where you draw from one of two decks of cards represented by two symbols.<br><br>',
-          "For now, we will represent the two decks with letters: <br>"+
-          '<span style="font-weight:bold">A</span> and '+'<span style="font-weight:bold">B.</span><br><br>',
-          'Choose either <span style="font-weight:bold">A</span> or <span style="font-weight:bold">B</span> by pressing '+'<span style="font-weight:bold">F</span> ' + 'or '+'<span style="font-weight:bold">J</span>'+
-          ", respectively.<br><br>",
-          '<p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue.</p>']
-        };
-        return stim;
-      },
-    choices: [' '],
-    fadein_duration: duration_fn(debugFlag,1000,100),
-    fadeout_duration: duration_fn(debugFlag,200,100),
-    minimum_duration: duration_fn(debugFlag,1000,100),
-  };
-  timeline.push(instructions_keypress);
+  timeline.push(spit_long_instructions('keypress'));
 
   var stims_ab = ['img/shape_train01.png','img/shape_train02.png'];
   var example_trial = {
@@ -198,6 +178,7 @@ function exec_expe(reward_csv) {
       task: 'response'
     }
   };
+
   var post_example_trial = {
     type: "html-keyboard-response-sequential-faded",
     stimulus: function () {
@@ -221,7 +202,7 @@ function exec_expe(reward_csv) {
   };
   timeline.push(fixation_fn(debugFlag),example_trial,chosen_trialstim_fn(stims_ab),feedback_fn(50),post_example_trial);
 
-  var n_sessions = 6; // hard-coded
+  var n_sessions  = 6; // hard-coded
   var choice_opts = ['f','j']; // set of available keys to choices
   var cond_types  = ['REF','VOL','UNP'];
 
@@ -280,8 +261,8 @@ function exec_expe(reward_csv) {
     let idx_blocks_half;
     // push specific instructions and training for the 1st instance of any condition
     if (isesh < 3) {
-      timeline.push(spit_long_instructions(init_cond_instruction_str));
-      exec_training(cond_type);
+      // timeline.push(spit_long_instructions(init_cond_instruction_str)); //debug
+      // exec_training(cond_type); //debug
       idx_blocks_half = 0;
     } else {
       idx_blocks_half = 1;
@@ -351,13 +332,22 @@ function exec_expe(reward_csv) {
       /* Local declaration of the current shape set */
       let stims;
       if (cond_order[isesh] != 2) { // for REF and UNP, need to cycle through shapes
-        // the randomization was determined at the beginning of the script.
-        if (isesh < 3) {
-          stims = [stimulis[shape_pairs_randomized1[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
-                   stimulis[shape_pairs_randomized1[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
-        } else {
-          stims = [stimulis[shape_pairs_randomized2[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
-                   stimulis[shape_pairs_randomized2[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
+        if (isesh < 3) { // 1st half
+          if (cond_order[isesh]==1) { //REF
+            stims = [stimulis[shape_pairs_randomized1[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
+                     stimulis[shape_pairs_randomized1[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
+          } else { // UNP
+            stims = [stimulis[shape_pairs_randomized1[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)+10]],
+                     stimulis[shape_pairs_randomized1[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)+10]]];
+          }
+        } else { // 2nd half
+          if (cond_order[isesh]==1) { //REF
+            stims = [stimulis[shape_pairs_randomized2[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1)]],
+                     stimulis[shape_pairs_randomized2[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1)]]];
+          } else { // UNP
+            stims = [stimulis[shape_pairs_randomized2[stim_loc+2*(idx_blocks[idx_blocks_half][itrl]-1+10)]],
+                     stimulis[shape_pairs_randomized2[-stim_loc+1+2*(idx_blocks[idx_blocks_half][itrl]-1+10)]]];
+          }
         }
       }
       else { // for VOL, maintain the same shape set for entire session
@@ -470,6 +460,21 @@ function exec_expe(reward_csv) {
         timeline.push(trialstim_end_block_feedback,end_session_stim_fn(isesh));
       }
     } // end trial loop
+
+    if (isesh == 2) {
+      var trialstim_end_of_first_half = {
+        type: 'html-keyboard-response-min-duration',
+        stimulus: function() {
+          return 'This is the end of the 1st half of the experiment.<br><br>'+
+            'In the next half, you will see the same symbols you encountered in the first half, but these are completely different decks.<br><br>'+ow t
+            'If you need to take a short pause, you may do so now.<br><br>'+
+            '<br><br><p style = "text-align: center; font-size: 28px; font-weight: bold">Press spacebar to continue</p>';
+        },
+        choices: [' '],
+        minimum_duration: duration_fn(debugFlag,5000,1000),
+      };
+      timeline.push(trialstim_end_of_first_half);
+    }
   } // end block loop
 
   // end of experiment presentation

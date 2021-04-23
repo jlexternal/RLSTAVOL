@@ -230,50 +230,53 @@ function exec_training(cond_type) {
               }
             }
             // preface to the feedback table
-            let boldANodeSpan = document.createElement("span");
-                boldANodeSpan.style.fontWeight = "bold";
-                boldANodeSpan.appendChild(document.createTextNode("A"));
-            let boldBNodeSpan = document.createElement("span");
-                boldBNodeSpan.style.fontWeight = "bold";
-                boldBNodeSpan.appendChild(document.createTextNode("A"));
+            function boldANodeFn () {
+              var boldASpanNode = document.createElement("span");
+                  boldASpanNode.style.fontWeight = "bold";
+                  boldASpanNode.appendChild(document.createTextNode("A"));
+              return boldASpanNode;
+            }
+            var boldBSpanNode = document.createElement("span");
+                boldBSpanNode.style.fontWeight = "bold";
+                boldBSpanNode.appendChild(document.createTextNode("B"));
 
-            let aboveTableNodeSpan = document.createElement("span");
-                aboveTableNodeSpan.appendChild(document.createTextNode("Here's your performance during this training session:"));
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
-                  greenTextNodeSpan = document.createElement("span");
-                  greenTextNodeSpan.style.color = "green";
-                  greenTextNodeSpan.style.fontWeight  = "bold";
-                  greenTextNodeSpan.appendChild(document.createTextNode('O'));
-                aboveTableNodeSpan.appendChild(document.createTextNode("The green "));
-                aboveTableNodeSpan.appendChild(greenTextNodeSpan);
-                aboveTableNodeSpan.appendChild(document.createTextNode(" indicates where you were correct and "));
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
-                  redTextNodeSpan = document.createElement("span");
-                  redTextNodeSpan.style.color = "red";
-                  redTextNodeSpan.style.fontWeight  = "bold";
-                  redTextNodeSpan.appendChild(document.createTextNode('X'));
-                aboveTableNodeSpan.appendChild(document.createTextNode("The red "));
-                aboveTableNodeSpan.appendChild(redTextNodeSpan);
-                aboveTableNodeSpan.appendChild(document.createTextNode(" indicates where you were incorrect."));
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
+            let aboveTableSpanNode = document.createElement("span");
+                aboveTableSpanNode.appendChild(document.createTextNode("Here's your performance during this training session:"));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
+                  greenTextSpanNode = document.createElement("span");
+                  greenTextSpanNode.style.color = "green";
+                  greenTextSpanNode.style.fontWeight  = "bold";
+                  greenTextSpanNode.appendChild(document.createTextNode('O'));
+                aboveTableSpanNode.appendChild(document.createTextNode("The green "));
+                aboveTableSpanNode.appendChild(greenTextSpanNode);
+                aboveTableSpanNode.appendChild(document.createTextNode(" indicates where you were correct and "));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
+                  redTextSpanNode = document.createElement("span");
+                  redTextSpanNode.style.color = "red";
+                  redTextSpanNode.style.fontWeight  = "bold";
+                  redTextSpanNode.appendChild(document.createTextNode('X'));
+                aboveTableSpanNode.appendChild(document.createTextNode("The red "));
+                aboveTableSpanNode.appendChild(redTextSpanNode);
+                aboveTableSpanNode.appendChild(document.createTextNode(" indicates where you were incorrect."));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
                 if (cond_type=='REF') {
-                  aboveTableNodeSpan.appendChild(document.createTextNode("As you can see, even if "));
-                  aboveTableNodeSpan.appendChild(boldBNodeSpan);
-                  aboveTableNodeSpan.appendChild(document.createTextNode(" sometimes gave points higher than 50, or "))
-                  aboveTableNodeSpan.appendChild(boldANodeSpan);
-                  aboveTableNodeSpan.appendChild(document.createTextNode(" gave points lower than 50,"));
-                  aboveTableNodeSpan.appendChild(document.createElement("br"));
-                  aboveTableNodeSpan.appendChild(document.createTextNode("the only valuable cards were from deck "));
-                  aboveTableNodeSpan.appendChild(boldANodeSpan);
-                  aboveTableNodeSpan.appendChild(document.createTextNode("."));
+                  aboveTableSpanNode.appendChild(document.createTextNode("As you can see, even if "));
+                  aboveTableSpanNode.appendChild(boldBSpanNode); // B
+                  aboveTableSpanNode.appendChild(document.createTextNode(" sometimes gave points higher than 50, or "));
+                  aboveTableSpanNode.appendChild(boldANodeFn()); // A
+                  aboveTableSpanNode.appendChild(document.createTextNode(" gave points lower than 50,"));
+                  aboveTableSpanNode.appendChild(document.createElement("br"));
+                  aboveTableSpanNode.appendChild(document.createTextNode("the only valuable cards were from deck "));
+                  aboveTableSpanNode.appendChild(boldANodeFn()); // A
+                  aboveTableSpanNode.appendChild(document.createTextNode("."));
                 } else if (cond_type=='VOL') {
 
                 } else { // UNP
-                  aboveTableNodeSpan.appendChild(document.createTextNode("As you saw, the values for both decks fluctuated more wildly than with the first game."));
+
                 }
-                aboveTableNodeSpan.appendChild(document.createElement("br"));
+                aboveTableSpanNode.appendChild(document.createElement("br"));
 
             // create debriefing feedback table
             let condtype  = cond_type;
@@ -283,43 +286,44 @@ function exec_training(cond_type) {
             let tbl = debriefTableCreate(condtype,scorearr,ntrials,fbseen); // call the detailed feedback history function from above
 
             // post-feedback table commments
-            let belowTableNodeSpan = document.createElement("span");
+            let belowTableSpanNode = document.createElement("span");
             if (cond_type=='VOL') {
-              belowTableNodeSpan.appendChild(document.createTextNode("The debriefing above shows that the valuable cards switched to the other deck once during the round."));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createTextNode("During the real game, this can happen multiple times."));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createTextNode("Note, however, it will not flip over too fast after any given switch."));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createTextNode("The debriefing above shows that the valuable cards switched to the other deck once during the round."));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createTextNode("During the real game, this can happen multiple times."));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createTextNode("Note, however, it will not flip over too fast after any given switch."));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createElement("br"));
 
             } else if (cond_type=='REF') {
 
             } else { // UNP
-              belowTableNodeSpan.appendChild(document.createTextNode("It is up to you to figure out which is the valuable deck."));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
-              belowTableNodeSpan.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createTextNode("As you see, it may be more difficult to determine the valuable deck."));
+              belowTableSpanNode.appendChild(document.createElement("br"));
+              belowTableSpanNode.appendChild(document.createTextNode("Your gain is still based on the number of draws from the valuable deck."));
+              belowTableSpanNode.appendChild(document.createElement("br"));
             }
-            belowTableNodeSpan.appendChild(document.createTextNode("Your theoretical true/paid score is: " + score + '/' + n_trials ));
-            belowTableNodeSpan.appendChild(document.createElement("br"));
-            belowTableNodeSpan.appendChild(document.createElement("br"));
+            belowTableSpanNode.appendChild(document.createTextNode("Your theoretical true/paid score is: " + score + '/' + n_trials ));
+            belowTableSpanNode.appendChild(document.createElement("br"));
+            belowTableSpanNode.appendChild(document.createElement("br"));
 
             // continue instructions
-            let continueNodeSpan = document.createElement("span");
-                continueNodeSpan.style.fontWeight = 'bold';
-                continueNodeSpan.appendChild(document.createTextNode('Press spacebar to continue'));
+            let continueSpanNode = document.createElement("span");
+                continueSpanNode.style.fontWeight = 'bold';
+                continueSpanNode.appendChild(document.createTextNode('Press spacebar to continue'));
 
             // stack the visuals to be displayed on screen
             let divDisplay = document.createElement("div"); //create new <div>
-                divDisplay.appendChild(aboveTableNodeSpan);
+                divDisplay.appendChild(aboveTableSpanNode);
                 divDisplay.appendChild(document.createElement("br"));
                 divDisplay.appendChild(tbl);
                 divDisplay.appendChild(document.createElement("br"));
                 divDisplay.appendChild(document.createElement("br"));
-                divDisplay.appendChild(belowTableNodeSpan);
-                divDisplay.appendChild(continueNodeSpan);
+                divDisplay.appendChild(belowTableSpanNode);
+                divDisplay.appendChild(continueSpanNode);
 
             return divDisplay.innerHTML;
           },

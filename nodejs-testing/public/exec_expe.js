@@ -104,7 +104,7 @@ function exec_expe(reward_csv) {
       },
       choices: [' ']
     };
-    return end_session_stim
+    return end_session_stim;
   }
 
   // 2 shapes for VOL; 10 shapes for REF; 10 shapes for UNP
@@ -397,7 +397,7 @@ function exec_expe(reward_csv) {
           // correct/incorrect flag for trial
           if(jsPsych.pluginAPI.compareKeys(data.response, cor_choice)){
             data.correct = true;
-            score++
+            score++;
           } else {
             data.correct = false;
           }
